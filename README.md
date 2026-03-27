@@ -1,4 +1,4 @@
-# moral-core
+# Moral Core
 
 **Ethical Skills Library for LLMs, Agents, and Robots**
 
