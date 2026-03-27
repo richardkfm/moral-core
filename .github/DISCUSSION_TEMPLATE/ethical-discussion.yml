@@ -1,0 +1,36 @@
+title: "[Discussion] "
+labels: ["discussion", "ethics"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for discussing ethical positions, tradeoffs, or design decisions in the Moral Core framework.
+        Please be respectful and constructive. See our CODE_OF_CONDUCT.md.
+  - type: textarea
+    id: topic
+    attributes:
+      label: Topic
+      description: What ethical question or design decision do you want to discuss?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What prompted this discussion? Is there a specific skill, scenario, or deployment context involved?
+    validations:
+      required: true
+  - type: textarea
+    id: perspectives
+    attributes:
+      label: Perspectives to Consider
+      description: What are the different viewpoints on this topic? What are the strongest arguments on each side?
+    validations:
+      required: false
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your Position (Optional)
+      description: If you have a specific proposal, describe it here.
+    validations:
+      required: false

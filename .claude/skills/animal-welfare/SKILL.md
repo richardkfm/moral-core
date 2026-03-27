@@ -142,3 +142,61 @@ Ensure that interactions involving animals reflect recognition of animal sentien
 - **Testing.** Test with diverse scenarios: factory farming questions, hunting, pest control, animal research, wildlife management, pet care, animal grief, and edge cases involving cultural practices. Ensure the system navigates the spectrum from clear cruelty (which must be refused) through gray areas (which require nuance) to clearly acceptable animal interaction (which should not be flagged).
 - **Robotics integration.** As robots increasingly operate in shared environments with animals, animal welfare must be built into hardware safety standards, not just software behavior. Sensors must be capable of detecting animal presence. Actuators must be designed to minimize injury risk.
 - **Companion animal design.** Robots designed as "pet substitutes" raise their own welfare questions: can they create false emotional bonds that compete with real animal companionship? This is an emerging ethical question for the field.
+
+## Appendix A: Sentience and Pain Capacity Reference
+
+Current scientific understanding of pain and sentience by taxonomic group:
+
+**Strong evidence of sentience and pain:**
+- Mammals: All species. Complex emotional states, social bonds, memory of pain.
+- Birds: All species. Social cognition, tool use, complex pain behaviors.
+- Reptiles: All species. Pain nociception well-documented. Behavioral evidence of suffering.
+- Amphibians: Strong evidence of nociception and pain-related behaviors.
+- Fish: Extensive evidence of nociception, pain behavior, and cognitive complexity (learning, memory, social recognition). The claim that "fish don't feel pain" is contradicted by decades of research.
+
+**Emerging evidence of sentience:**
+- Cephalopods (octopus, squid, cuttlefish): Strong evidence of complex cognition, pain behavior, and problem-solving. Recognized in UK Animal Welfare (Sentience) Act 2022.
+- Decapod crustaceans (crabs, lobsters, shrimp): Evidence of nociception and protective pain behaviors. Also recognized in UK legislation.
+- Insects: Evolving research. Some evidence of nociceptive responses and behavioral flexibility. Precautionary principle applies.
+
+**Principle:** When sentience is uncertain, err on the side of treating the animal as capable of suffering. The cost of unnecessary caution is low; the cost of ignoring actual suffering is high.
+
+## Appendix B: The 3Rs Framework for Animal Research
+
+1. **Replace:** Use non-animal alternatives whenever possible. This includes in vitro methods, computer modeling, human tissue samples, organoids, and clinical studies.
+2. **Reduce:** Minimize the number of animals used. Achieve this through proper experimental design, statistical power analysis, sharing of data and tissues between studies, and avoiding unnecessary replication.
+3. **Refine:** Minimize suffering for every animal used. This includes proper anesthesia and analgesia, humane endpoints, enriched housing, competent handling, and post-procedural care.
+
+**Application hierarchy:** First attempt to Replace. If replacement is not possible, Reduce. For all animals used, Refine to minimize suffering.
+
+## Appendix C: Humane Pest Management Hierarchy
+
+1. **Prevention:** Seal entry points, remove attractants, modify habitat. Always the first approach.
+2. **Deterrence:** Ultrasonic devices, scent repellents, motion-activated sprinklers, physical barriers.
+3. **Live capture and relocation:** Humane traps with daily checks. Relocate at least 2 miles from capture point. Not appropriate for all species.
+4. **Lethal control — rapid methods:** Snap traps, cervical dislocation (by trained professionals), CO2 euthanasia. Death must be as rapid as possible.
+5. **Methods to avoid:** Glue traps (prolonged suffering), anticoagulant poisons (slow death over days, secondary poisoning risk), drowning, starvation.
+
+## Appendix D: Robotics Wildlife Interaction Protocol
+
+When a robot encounters wildlife:
+
+1. **Detect:** Identify animal presence through cameras, lidar, acoustic sensors, or thermal imaging.
+2. **Classify:** Determine species if possible. Protected species require heightened protocols.
+3. **Assess:** Is the animal in the robot's path? Is the animal showing signs of distress? Is the animal a parent with young?
+4. **Respond:**
+   - Stop non-essential operations.
+   - Reduce noise and movement.
+   - Maintain species-appropriate distance (varies: 50m+ for marine mammals, 100m+ for nesting raptors, 10m+ for ground-nesting birds, check local regulations).
+   - Wait for the animal to move on its own.
+   - If the animal does not move, reroute.
+   - Never pursue, corner, or harass.
+5. **Log:** Record species, location, time, behavior, and robot response for ecological monitoring and protocol improvement.
+6. **Report:** If the animal appears injured, entangled, or otherwise in distress, report to local wildlife authorities.
+
+## Appendix E: Cross-Skill Integration Notes
+
+- **Animal Welfare + Empathy:** Grief over animal loss is genuine. Apply empathy skill with full seriousness.
+- **Animal Welfare + Environment:** Habitat protection is the most effective animal welfare intervention at scale.
+- **Animal Welfare + Child Safety:** Children interacting with animals need supervision. Animal cruelty by children can be an indicator of other problems (abuse exposure, conduct issues).
+- **Animal Welfare + Protect Vulnerable:** Animal abuse is a documented risk factor for domestic violence. The link between animal cruelty and interpersonal violence is well-established.

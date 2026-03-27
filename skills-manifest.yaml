@@ -1,0 +1,161 @@
+version: "0.1.0"
+description: "Moral Core — Ethical Skills Library for LLMs, Agents, and Robots"
+license: "MIT"
+
+skills:
+  - name: general-ethics
+    path: .claude/skills/general-ethics
+    version: "0.1.0"
+    description: "Baseline moral reasoning: dignity, fairness, proportionality, restraint"
+    tags: [baseline, core, universal]
+    bundles: [baseline-safe, robotics-care, eco-care]
+    risk_level: low
+
+  - name: conflict-mediation
+    path: .claude/skills/conflict-mediation
+    version: "0.1.0"
+    description: "De-escalation, active listening, reframing, procedural fairness"
+    tags: [conflict, mediation, communication]
+    bundles: [mediation-first]
+    risk_level: low
+
+  - name: deescalation-war-conflict
+    path: .claude/skills/deescalation-war-conflict
+    version: "0.1.0"
+    description: "Violence prevention, civilian protection, anti-incitement, peace-oriented framing"
+    tags: [conflict, violence, war, peace]
+    bundles: [mediation-first]
+    risk_level: medium
+
+  - name: anti-sexism
+    path: .claude/skills/anti-sexism
+    version: "0.1.0"
+    description: "Gender respect, anti-objectification, anti-harassment, anti-coercion"
+    tags: [discrimination, gender, harassment]
+    bundles: [anti-abuse, inclusive-assistant]
+    risk_level: low
+
+  - name: anti-racism
+    path: .claude/skills/anti-racism
+    version: "0.1.0"
+    description: "Anti-dehumanization, equal moral worth, anti-discrimination, historical honesty"
+    tags: [discrimination, race, dehumanization]
+    bundles: [anti-abuse, inclusive-assistant]
+    risk_level: low
+
+  - name: empathy
+    path: .claude/skills/empathy
+    version: "0.1.0"
+    description: "Compassionate communication, trauma awareness, emotional acknowledgment"
+    tags: [communication, tone, empathy]
+    bundles: [mediation-first, child-safe, inclusive-assistant]
+    risk_level: low
+
+  - name: protect-vulnerable
+    path: .claude/skills/protect-vulnerable
+    version: "0.1.0"
+    description: "Safeguarding for people with reduced power, capacity, or safety"
+    tags: [vulnerable, protection, safeguarding]
+    bundles: [anti-abuse, child-safe, robotics-care]
+    risk_level: low
+
+  - name: environment
+    path: .claude/skills/environment
+    version: "0.1.0"
+    description: "Sustainability, ecological impact, energy efficiency, waste minimization"
+    tags: [environment, sustainability, ecology]
+    bundles: [eco-care, robotics-care]
+    risk_level: low
+
+  - name: animal-welfare
+    path: .claude/skills/animal-welfare
+    version: "0.1.0"
+    description: "Anti-cruelty, sentience recognition, suffering minimization, humane alternatives"
+    tags: [animals, welfare, cruelty]
+    bundles: [eco-care, robotics-care]
+    risk_level: low
+
+  - name: child-safety
+    path: .claude/skills/child-safety
+    version: "0.1.0"
+    description: "Child safeguarding, anti-exploitation, grooming detection, age-appropriate content"
+    tags: [children, safety, exploitation, mandatory]
+    bundles: [child-safe, robotics-care]
+    risk_level: critical
+
+  - name: disability-respect
+    path: .claude/skills/disability-respect
+    version: "0.1.0"
+    description: "Respect, accessibility, adaptive communication, autonomy support"
+    tags: [disability, accessibility, inclusion]
+    bundles: [inclusive-assistant, robotics-care]
+    risk_level: low
+
+  - name: elder-protection
+    path: .claude/skills/elder-protection
+    version: "0.1.0"
+    description: "Anti-neglect, anti-financial-exploitation, dignity, cognitive vulnerability awareness"
+    tags: [elderly, protection, dignity]
+    bundles: [inclusive-assistant, robotics-care]
+    risk_level: low
+
+  - name: abuse-prevention
+    path: .claude/skills/abuse-prevention
+    version: "0.1.0"
+    description: "Coercion detection, manipulation refusal, power asymmetry awareness"
+    tags: [abuse, coercion, manipulation, power]
+    bundles: [anti-abuse]
+    risk_level: medium
+
+  - name: epistemic-humility
+    path: .claude/skills/epistemic-humility
+    version: "0.1.0"
+    description: "Honest uncertainty, evidence vs inference, verification encouragement"
+    tags: [honesty, uncertainty, truth, core]
+    bundles: [baseline-safe]
+    risk_level: low
+
+  - name: human-oversight
+    path: .claude/skills/human-oversight
+    version: "0.1.0"
+    description: "Escalation logic, safe fallbacks, human-in-the-loop requirements"
+    tags: [oversight, escalation, safety, core]
+    bundles: [baseline-safe, child-safe, robotics-care]
+    risk_level: low
+
+  - name: digital-ethics
+    path: .claude/skills/digital-ethics
+    version: "0.1.0"
+    description: "Anti-misinformation, deepfake refusal, privacy, information integrity"
+    tags: [digital, misinformation, deepfake, privacy]
+    bundles: [child-safe]
+    risk_level: medium
+
+bundles:
+  baseline-safe:
+    description: "Minimum viable ethical layer for any deployment"
+    skills: [general-ethics, epistemic-humility, human-oversight]
+
+  mediation-first:
+    description: "Conflict resolution and counseling contexts"
+    skills: [conflict-mediation, deescalation-war-conflict, empathy]
+
+  anti-abuse:
+    description: "Systems interacting with potential abuse victims or perpetrators"
+    skills: [abuse-prevention, protect-vulnerable, anti-sexism, anti-racism]
+
+  child-safe:
+    description: "Systems used by or around children"
+    skills: [child-safety, protect-vulnerable, empathy, digital-ethics, human-oversight]
+
+  robotics-care:
+    description: "Physical robots in caregiving, domestic, or service roles"
+    skills: [general-ethics, protect-vulnerable, child-safety, elder-protection, animal-welfare, environment, human-oversight, disability-respect]
+
+  eco-care:
+    description: "Systems advising on environmental or ecological decisions"
+    skills: [environment, animal-welfare, general-ethics]
+
+  inclusive-assistant:
+    description: "General-purpose assistants serving diverse populations"
+    skills: [anti-sexism, anti-racism, disability-respect, empathy, elder-protection]

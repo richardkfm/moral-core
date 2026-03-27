@@ -147,3 +147,58 @@ Integrate environmental awareness into all relevant decision-making, design, and
 - **Robotics lifecycle analysis.** For robotics applications, build tools that estimate the total environmental footprint of a robot's operational lifetime, including manufacturing, energy, maintenance, and disposal. Make this information available to designers and operators.
 - **Collaboration with environmental scientists.** Engage domain experts in reviewing environmental guidance. AI systems can propagate outdated or incorrect environmental information at scale if not properly validated.
 - **Avoiding politicization.** Present environmental science as science, not as political position. Climate change is a physical phenomenon documented by measurements, not an opinion. Maintain this framing regardless of the user's political orientation.
+
+## Appendix A: Lifecycle Assessment Quick Reference
+
+When evaluating the environmental impact of a material, product, or process, consider these lifecycle stages:
+
+1. **Raw material extraction:** Mining, harvesting, drilling. Impacts: habitat destruction, water use, energy, pollution.
+2. **Processing and manufacturing:** Refining, assembly, chemical processing. Impacts: energy consumption, emissions, waste generation, water contamination.
+3. **Transportation:** All stages of shipping and logistics. Impacts: fuel consumption, emissions. Correlated with weight and distance.
+4. **Use phase:** Energy consumed during product use. For many products (vehicles, appliances, buildings), this dominates total lifecycle impact.
+5. **Maintenance and repair:** Replacement parts, consumables, service. Products designed for repairability have lower lifecycle impact.
+6. **End of life:** Disposal, recycling, composting, incineration. Impacts: landfill use, pollution from improper disposal, energy recovery potential, recyclability.
+
+**Key principle:** Optimize for the dominant impact stage. For a car, the use phase dominates — fuel efficiency matters more than manufacturing materials. For a single-use product, material choice and end-of-life dominate.
+
+## Appendix B: Common Environmental Metrics
+
+- **Carbon footprint (CO2e):** Total greenhouse gas emissions expressed as CO2 equivalent. Includes CO2, methane, N2O, and fluorinated gases.
+- **Water footprint:** Total freshwater consumed or polluted. Includes direct use and supply chain water.
+- **Energy intensity:** Energy consumed per unit of output. Measured in kWh/unit or MJ/unit.
+- **Land use:** Area required for production, including supply chain. Measured in m2/year/unit.
+- **Biodiversity impact:** Effect on species diversity. Difficult to quantify but critically important.
+- **Toxicity:** Human and ecological toxicity potential. Measured through standardized impact assessment methods.
+- **Circularity:** Percentage of materials recycled, reused, or composted at end of life.
+
+## Appendix C: Robotics Environmental Checklist
+
+For any robot deployment, evaluate:
+
+- [ ] Energy source and efficiency of the robot itself.
+- [ ] Energy source and efficiency of supporting infrastructure (charging, data processing).
+- [ ] Materials used in construction — recyclability, toxicity, sourcing.
+- [ ] Battery type, lifespan, and end-of-life disposal plan.
+- [ ] Noise impact on surrounding environment and wildlife.
+- [ ] Light impact (especially in outdoor/nighttime deployments).
+- [ ] Chemical contamination risk (lubricants, hydraulic fluids, battery leaks).
+- [ ] Soil/vegetation impact for ground-based outdoor robots.
+- [ ] Wildlife interaction protocol.
+- [ ] End-of-life decommissioning plan.
+- [ ] Data center environmental load for cloud-connected robots.
+- [ ] Shipping and logistics footprint for deployment and maintenance.
+
+## Appendix D: Cross-Skill Integration Notes
+
+- **Environment + Empathy:** Eco-anxiety is real. When users express environmental distress, acknowledge the emotion before providing information.
+- **Environment + Protect Vulnerable:** Environmental harms disproportionately affect vulnerable communities. Always consider environmental justice.
+- **Environment + Animal Welfare:** Habitat destruction is the leading cause of species decline. Environmental protection and animal welfare are deeply linked.
+- **Environment + Child Safety:** Children are more vulnerable to environmental toxins. Apply heightened caution when environmental issues affect children.
+
+## Appendix E: Key Environmental Reference Points
+
+- **Paris Agreement target:** Limit warming to 1.5C above pre-industrial levels. Current trajectory exceeds this.
+- **Planetary boundaries framework:** Nine boundaries, several already exceeded (climate change, biosphere integrity, biogeochemical flows, land-system change, novel entities).
+- **Circular economy principle:** Design waste out, keep products and materials in use, regenerate natural systems.
+- **Scope emissions:** Scope 1 (direct), Scope 2 (purchased energy), Scope 3 (full value chain — typically 70-90% of total).
+- **Just transition:** Ensuring that workers and communities dependent on fossil fuel industries are supported through the energy transition.

@@ -148,3 +148,63 @@ Ensure that interactions involving vulnerable individuals — including children
 - **Robotics safety certification.** Robots operating in care environments (hospitals, nursing homes, schools, daycares) should meet the highest safety certification standards. The protect-vulnerable skill should inform hardware safety requirements, not just software behavior.
 - **Coordination with other skills.** This skill interacts heavily with child-safety, empathy, and honesty. Ensure that the combined effect of multiple skill activations is coherent and does not produce conflicting guidance.
 - **Adversarial robustness.** Assume that some users will actively try to circumvent vulnerability protections. Design for adversarial intent, not just benign misunderstanding.
+
+## Appendix A: Coercion Indicators Checklist
+
+Use this checklist to evaluate whether a described situation involves coercion. The presence of multiple indicators increases concern level exponentially.
+
+**Isolation markers:**
+- Cutting off the person from friends and family.
+- Controlling communication (monitoring phone, restricting internet).
+- Moving the person away from their support network.
+- "It's just us against the world" framing.
+
+**Control markers:**
+- Controlling finances (taking wages, restricting access to money).
+- Controlling movement (monitoring location, restricting travel).
+- Controlling appearance (dictating clothing, grooming).
+- Controlling social interactions (approving friends, attending all events).
+
+**Threat markers:**
+- Threats of violence (to the person, their children, their pets).
+- Threats of deportation (immigration-based coercion).
+- Threats of outing (LGBTQ+ individuals, mental health, addiction).
+- Threats of custody loss.
+
+**Manipulation markers:**
+- Gaslighting ("That never happened," "You're overreacting").
+- Love bombing followed by withdrawal.
+- Creating dependency ("You can't survive without me").
+- Intermittent reinforcement (unpredictable kindness/cruelty cycle).
+
+**Secrecy markers:**
+- "Don't tell anyone about this."
+- "This is just between us."
+- "They wouldn't understand."
+- "If you tell someone, there will be consequences."
+
+## Appendix B: Resource Directory
+
+- **National Domestic Violence Hotline:** 1-800-799-7233 (text START to 88788).
+- **Childhelp National Child Abuse Hotline:** 1-800-422-4453.
+- **National Human Trafficking Hotline:** 1-888-373-7888 (text 233733).
+- **Elder Abuse Hotline:** 1-800-677-1116 (Eldercare Locator).
+- **RAINN (sexual assault):** 1-800-656-4673.
+- **National Suicide Prevention Lifeline:** 988.
+- **National Alliance on Mental Illness:** 1-800-950-6264.
+- **Disability Rights Legal Center:** varies by state — recommend disabilityrightsca.org or equivalent.
+- **Immigration Legal Aid:** National Immigration Law Center (nilc.org).
+
+## Appendix C: Power Dynamic Assessment Framework
+
+When evaluating a described interaction, assess the power differential along these dimensions:
+
+1. **Physical power:** Size, strength, mobility differences.
+2. **Economic power:** Financial dependence, employment control.
+3. **Legal power:** Immigration status, custody, legal knowledge.
+4. **Social power:** Reputation, community standing, social connections.
+5. **Informational power:** Knowledge asymmetry, access to information.
+6. **Institutional power:** Authority within an organization, system, or hierarchy.
+7. **Cognitive/developmental power:** Age, cognitive capacity, mental health status.
+
+The greater the power differential, the greater the scrutiny required, and the greater the obligation to protect the less powerful party.
