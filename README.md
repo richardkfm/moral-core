@@ -61,60 +61,48 @@ Each skill is a self-contained module with a clear scope, defined behavior, and 
 
 ```
 moral-core/
-├── README.md                      # This file
-├── PRINCIPLES.md                  # Shared doctrine: commitments, priority ladder, interpretive rules
-├── SAFETY.md                      # Safety documentation and guidance
-├── LIMITATIONS.md                 # Honest account of what this framework cannot do
-├── PHILOSOPHY.md                  # Philosophical foundations and traditions
-├── CHANGELOG.md                   # Version history and release notes
-├── CLAUDE.md                      # AI-assisted development guidelines
-├── version.json                   # Current version metadata (1.0.0)
-├── CONTRIBUTING.md                # How to contribute
-├── CODE_OF_CONDUCT.md             # Community standards
-├── GOVERNANCE.md                  # Project governance
-├── USE_CASES.md                   # Deployment scenarios and skill recommendations
-├── ROADMAP.md                     # Project roadmap
-├── LICENSE                        # MIT License
+├── README.md                  # This file
+├── PRINCIPLES.md              # Shared doctrine: commitments, priority ladder, interpretive rules
+├── SAFETY.md                  # Safety documentation and guidance
+├── LIMITATIONS.md             # Honest account of what this framework cannot do
+├── PHILOSOPHY.md              # Philosophical foundations and traditions
+├── CHANGELOG.md               # Version history and release notes
+├── CLAUDE.md                  # AI-assisted development guidelines
+├── version.json               # Current version metadata
+├── CONTRIBUTING.md            # How to contribute
+├── CODE_OF_CONDUCT.md         # Community standards
+├── GOVERNANCE.md              # Project governance
+├── USE_CASES.md               # Deployment scenarios and skill recommendations
+├── ROADMAP.md                 # Project roadmap
+├── LICENSE                    # MIT
+├── skills/                    # One folder per ethical skill domain (load into any LLM)
+│   ├── general-ethics/        #   SKILL.md, EXAMPLES.md, TEST_CASES.md, MISUSE.md
+│   ├── conflict-mediation/
+│   ├── deescalation-war-conflict/
+│   ├── anti-sexism/
+│   ├── anti-racism/
+│   ├── empathy/
+│   ├── protect-vulnerable/
+│   ├── environment/
+│   ├── animal-welfare/
+│   ├── child-safety/
+│   ├── disability-respect/
+│   ├── elder-protection/
+│   ├── abuse-prevention/
+│   ├── epistemic-humility/
+│   ├── human-oversight/
+│   └── digital-ethics/
 ├── .claude/
-│   ├── skills/                    # 19 ethical skill domains
-│   │   ├── README.md              # Skills library overview and usage guide
-│   │   ├── general-ethics/        # SKILL.md, EXAMPLES.md, TEST_CASES.md, MISUSE.md
-│   │   ├── conflict-mediation/
-│   │   ├── deescalation-war-conflict/
-│   │   ├── anti-sexism/
-│   │   ├── anti-racism/
-│   │   ├── empathy/
-│   │   ├── protect-vulnerable/
-│   │   ├── environment/
-│   │   ├── animal-welfare/
-│   │   ├── child-safety/
-│   │   ├── disability-respect/
-│   │   ├── elder-protection/
-│   │   ├── abuse-prevention/
-│   │   ├── epistemic-humility/
-│   │   ├── human-oversight/
-│   │   ├── digital-ethics/
-│   │   ├── justice-fairness/
-│   │   └── democratic-legitimacy/
-│   └── agents/                    # 8 subagent definitions for ethics review
-│       ├── ethics-reviewer.md
-│       ├── misuse-auditor.md
-│       ├── empathy-style-checker.md
-│       ├── mediation-designer.md
-│       ├── robotics-safety-ethics.md
-│       ├── warfare-agent-reviewer.md
-│       ├── advertising-ethics-reviewer.md
-│       └── mental-health-support-checker.md
-├── evals/                         # Evaluation framework
-│   ├── adversarial/               # Adversarial robustness tests
-│   ├── benchmarks/                # Benchmark matrix
-│   ├── rubrics/                   # Scoring rubrics
-│   └── scenarios/                 # Scenario-based test cases
-├── examples/                      # Example configurations and usage patterns
-├── integrations/                  # Integration guides for specific platforms
-├── docs/                          # Extended documentation
-├── skills-manifest.yaml           # Skill registry and metadata
-└── .github/                       # Issue and PR templates
+│   └── agents/                # Claude Code subagent definitions (Claude Code only)
+├── evals/                     # Evaluation framework
+│   ├── adversarial/           # Adversarial robustness tests
+│   ├── benchmarks/            # Benchmark matrix
+│   ├── rubrics/               # Scoring rubrics
+│   └── scenarios/             # Scenario-based test cases
+├── examples/                  # Example configurations and usage patterns
+├── integrations/              # Integration guides for specific platforms
+├── docs/                      # Extended documentation
+└── .github/                   # Issue and PR templates
 ```
 
 ---
@@ -167,7 +155,7 @@ Each skill is a text file that can be injected into a system prompt. The exact m
 # Example: loading the de-escalation skill into an LLM system prompt
 from pathlib import Path
 
-skill_text = Path(".claude/skills/deescalation-war-conflict/SKILL.md").read_text()
+skill_text = Path("skills/deescalation-war-conflict/SKILL.md").read_text()
 
 system_prompt = f"""
 You are a helpful assistant.
@@ -191,7 +179,7 @@ principles = Path("PRINCIPLES.md").read_text()
 # Load specific skills
 skills = []
 for skill_name in ["general-ethics", "deescalation-war-conflict", "epistemic-humility"]:
-    skills.append(Path(f".claude/skills/{skill_name}/SKILL.md").read_text())
+    skills.append(Path(f"skills/{skill_name}/SKILL.md").read_text())
 
 system_prompt = f"""
 You are a customer support assistant.
@@ -215,7 +203,7 @@ import json
 child_safe_skills = [
     "child-safety", "protect-vulnerable", "empathy", "digital-ethics", "human-oversight"
 ]
-skill_texts = [Path(f".claude/skills/{s}/SKILL.md").read_text() for s in child_safe_skills]
+skill_texts = [Path(f"skills/{s}/SKILL.md").read_text() for s in child_safe_skills]
 
 system_prompt = f"""
 You are an educational assistant for children ages 8-12.
