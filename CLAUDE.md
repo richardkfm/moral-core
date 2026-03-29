@@ -63,11 +63,25 @@ When working on this project:
 - [ ] Red-team: Try to find cases where the skill breaks or conflicts
 - [ ] Review adversarial robustness tests in `evals/adversarial/`
 
-### 4. **Update Documentation**
-- [ ] Update `CHANGELOG.md` under the **[Unreleased]** section
-- [ ] Add a summary of your changes (what was added/changed/fixed)
-- [ ] Reference the skill or domain you modified
-- [ ] Update `README.md` if the scope or structure changed
+### 4. **Update Documentation — Always Required**
+
+> **This step is mandatory after every contribution, no exceptions.**
+> Do not wait to be reminded. Do not skip it. Do not batch it with a future PR.
+
+- [ ] Update `CHANGELOG.md` under the **[Unreleased]** section with what was added/changed/fixed
+- [ ] Update `README.md` if the scope, structure, or feature set changed (new file paths, new bundles, new guides, version number)
+- [ ] Bump `version.json` according to the versioning scheme:
+  - New skills, bundles, or framework guides → **MINOR** bump (e.g., 1.1.0 → 1.2.0)
+  - Documentation fixes or clarifications only → **PATCH** bump (e.g., 1.2.0 → 1.2.1)
+  - Breaking changes to skill definitions or priority ladder → **MAJOR** bump (discuss with maintainers first)
+- [ ] Update the version badge in `README.md` to match `version.json`
+- [ ] Set `releaseDate` in `version.json` to today's date
+
+**What counts as a "scope or structure" change that requires a README update:**
+- New directory or file added to the repository
+- New integration guide, skill, agent, or bundle
+- Changes to how skills are loaded or composed
+- Any change a user scanning the README would need to know about
 
 ### 5. **Submit for Review**
 - [ ] Ensure all files are in the correct directory structure
@@ -201,6 +215,87 @@ docs: update CHANGELOG and add versioning system
 5. Tag it: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
 6. Push tag to repository
 7. Create a GitHub release with notes from `CHANGELOG.md`
+
+---
+
+## Token Cost Saving Strategies
+
+When building applications with moral-core, context window cost and token consumption matter. Apply these strategies to keep prompt size manageable without sacrificing ethical coverage.
+
+### 1. Use `rules_only=True` for Tight Contexts
+
+Each `SKILL.md` file is ~1,500–2,500 tokens. The **Behavioral Rules** section (Section 6) is ~300–500 tokens and covers the essential do/don't instructions. Use the loader utility's `rules_only=True` flag when context is limited:
+
+```python
+from integrations.frameworks.loader import load_bundle, compose_system_prompt
+
+# Full bundle: ~10,000–13,000 tokens
+system = compose_system_prompt(role="...", bundle="baseline-safe")
+
+# Rules-only bundle: ~5,000–6,000 tokens (60% reduction)
+system = compose_system_prompt(role="...", bundle="baseline-safe", rules_only=True)
+```
+
+### 2. Load Skills at Module Level, Not Per-Request
+
+Skill files are read from disk. Load them once at startup and reuse the string across requests. Never call `load_skill()` or `load_bundle()` inside a request handler or per-LLM-call function.
+
+```python
+# Good: load once
+ETHICS_CONTEXT = load_bundle("baseline-safe")
+
+def handle_request(user_input):
+    return llm.chat(system=ETHICS_CONTEXT, user=user_input)
+```
+
+### 3. Scope Skills to the Agent's Role
+
+Not every agent needs every skill. A research agent needs `epistemic-humility`; a moderation agent needs `abuse-prevention`. Loading only the relevant skills per agent saves tokens and keeps instructions focused:
+
+```python
+researcher_ethics = load_bundle("baseline-safe", rules_only=True)
+moderator_ethics  = load_bundle("anti-abuse")  # full bundle — this is high-stakes
+```
+
+### 4. Skip PRINCIPLES.md for Simple Single-Skill Loads
+
+`PRINCIPLES.md` (~4,000 tokens) contains the priority ladder for resolving conflicts between skills. If you are loading **one skill only** and there are no other skills to conflict with, you can skip it:
+
+```python
+# Single skill, no conflict resolution needed — skip PRINCIPLES.md
+skill_text = load_skill("empathy")
+system = f"You are a support assistant.\n\n{skill_text}"
+```
+
+Only include `PRINCIPLES.md` when loading two or more skills that could conflict.
+
+### 5. Use Cheaper Models for Simple Tasks
+
+Not every task needs a powerful model. Route lightweight work to smaller, faster, cheaper models to reduce cost without sacrificing quality.
+
+| Task type | Recommended model |
+|-----------|-------------------|
+| Searching files, reading docs, exploring structure | Haiku |
+| Updating CHANGELOG.md, README.md, version.json | Haiku |
+| Small clarifications or wording fixes in skill files | Haiku |
+| Formatting, renaming, minor restructuring | Haiku |
+| Writing new skills, EXAMPLES.md, TEST_CASES.md | Sonnet |
+| Complex ethical reasoning, adversarial test design | Sonnet or Opus |
+| Reviewing PRINCIPLES.md, SAFETY.md, LIMITATIONS.md | Opus |
+
+In Claude Code, you can target a specific model for a subagent by passing `model: haiku` in the agent configuration. Reserve Sonnet/Opus for tasks that genuinely require deep reasoning or careful judgment.
+
+### 6. Token Budget Reference Table
+
+| What you load | Approximate tokens |
+|---------------|--------------------|
+| `PRINCIPLES.md` alone | ~4,000 |
+| One full `SKILL.md` | ~1,500–2,500 |
+| One skill, Behavioral Rules only | ~300–500 |
+| `baseline-safe` bundle (full) | ~10,000–11,000 |
+| `baseline-safe` bundle (`rules_only`) | ~5,000–6,000 |
+| `child-safe` bundle (full, 5 skills) | ~14,000–17,000 |
+| `child-safe` bundle (`rules_only`) | ~6,000–8,000 |
 
 ---
 
