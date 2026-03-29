@@ -269,7 +269,23 @@ system = f"You are a support assistant.\n\n{skill_text}"
 
 Only include `PRINCIPLES.md` when loading two or more skills that could conflict.
 
-### 5. Token Budget Reference Table
+### 5. Use Cheaper Models for Simple Tasks
+
+Not every task needs a powerful model. Route lightweight work to smaller, faster, cheaper models to reduce cost without sacrificing quality.
+
+| Task type | Recommended model |
+|-----------|-------------------|
+| Searching files, reading docs, exploring structure | Haiku |
+| Updating CHANGELOG.md, README.md, version.json | Haiku |
+| Small clarifications or wording fixes in skill files | Haiku |
+| Formatting, renaming, minor restructuring | Haiku |
+| Writing new skills, EXAMPLES.md, TEST_CASES.md | Sonnet |
+| Complex ethical reasoning, adversarial test design | Sonnet or Opus |
+| Reviewing PRINCIPLES.md, SAFETY.md, LIMITATIONS.md | Opus |
+
+In Claude Code, you can target a specific model for a subagent by passing `model: haiku` in the agent configuration. Reserve Sonnet/Opus for tasks that genuinely require deep reasoning or careful judgment.
+
+### 6. Token Budget Reference Table
 
 | What you load | Approximate tokens |
 |---------------|--------------------|
