@@ -2,7 +2,7 @@
 
 **Ethical Skills Library for LLMs, Agents, and Robots**
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 
@@ -121,7 +121,10 @@ moral-core/
     ├── rubrics/               # Scoring rubrics
     └── scenarios/             # Scenario-based test cases
 ├── examples/                  # Example configurations and usage patterns
-├── integrations/              # Integration guides for specific platforms
+├── integrations/              # Integration guides for specific platforms and frameworks
+│   ├── frameworks/            # Framework-specific guides (LangChain, Dify, CrewAI, + template for more)
+│   │   └── loader.py          # Shared Python skill loader utility
+│   └── *.md                   # Use-case guides (customer support, education, robotics, etc.)
 ├── docs/                      # Extended documentation
 └── .github/                   # Issue and PR templates
 ```
@@ -132,15 +135,16 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.1.0** (released 2026-03-28)
+**Current Version: 1.2.0** (released 2026-03-29)
 
-**What's included in v1.0.0:**
+**What's included in v1.2.0:**
 - 18 ethical skill domains covering harm prevention, fairness, honesty, care, and more
 - 8 framework-agnostic reviewer agents for ethical validation and design
 - 8 Claude Code subagent equivalents for integration with Claude Code workflows
 - 8 pre-built policy bundles for common deployment contexts
 - Comprehensive evaluation framework with adversarial and scenario-based tests
 - Integration guides for LLMs, agents, robotics, education, content moderation, and enterprise
+- Framework-specific guides for LangChain, Dify, and CrewAI with shared Python loader utility
 - Full documentation including philosophical foundations and safety guidance
 
 **Versioning scheme:**
