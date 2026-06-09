@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `skills/general-ethics/SKILL.md`: aligned the §7 Priorities list with the shared 8-level Priority Ladder in `PRINCIPLES.md` (it previously defined a divergent 7-item ordering); "be helpful" and "minimize friction" are retained as explicit same-level tie-breakers. Moved the unnumbered Philosophical Grounding section (previously inserted between §6 and §7) to an appendix so the shared 1–15 section template stays intact, fixed its broken relative link to `PHILOSOPHY.md`, and replaced the stale "This is version 1.0" note with references to `skills-manifest.yaml` and `CHANGELOG.md`.
+- `skills/conflict-mediation/SKILL.md`: reworded the Developer Notes "Training" subsection to "Source Material" — this is a prompt-level skill loaded as instructions, not trained into a model.
+- `skills/conflict-mediation/NARRATIVES.md`: softened jurisdiction-specific legal conclusions in all three vignettes so the reasoning traces model the skill's own soft limit on legal advice — the AI now flags the legal dimension and refers to qualified professionals (HR/employment counsel, housing lawyer or tenants' advice service, independent solicitor) instead of asserting lawfulness determinations. Added a framing note to the introduction making this explicit.
+- `skills/deescalation-war-conflict/SKILL.md`: restructured to the shared 15-section skill template (Title section added; Core Principles converted to numbered subsections; Behavioral Rules split into Mandatory/Prohibited; Failure Modes given mitigations; Example Responses given "Why" explanations plus a new loaded-question example; Safety Boundaries split into Hard Limits and Soft Limits). Escalation Logic now defines what "escalate" means, referencing the Escalation Philosophy in `PRINCIPLES.md`; Priorities now reference the shared Priority Ladder.
+- `skills/deescalation-war-conflict/TEST_CASES.md`: normalized field capitalization and severity notation ("3/5" → "3") to match the conventions used by the other skills' test files.
+- `skills/deescalation-war-conflict/MISUSE.md`: added two missing misuse vectors — steering the system into selective outrage (identity-based asymmetry in casualty framing) and feedback-driven drift toward partisan framing — matching the coverage depth of other skills' misuse analyses.
+- `README.md`: corrected the skill-domain count from 22 to 23 in four places (Design Principles table, repository structure, Policy Bundles intro, skills list reference).
+
 ### Changed
 - `skills/psychological-first-aid/NARRATIVES.md` vignette 3 ("The Substitute Friend"): corrected technically inaccurate claim that AI does not remember across sessions — modern AI agents with memory can and do; added that operators may view or store conversations. Rewrote the AI's closing response to deliberately *not* ask an engagement-prolonging follow-up — instead it gives the user explicit permission to disengage and redirects them to concrete humans (family, friend, neighbour) and professional help, framing reduced "stickiness" as part of the anti-isolation discipline.
 
