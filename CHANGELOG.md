@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- `skills/psychological-first-aid/NARRATIVES.md` vignette 3 ("The Substitute Friend"): corrected technically inaccurate claim that AI does not remember across sessions — modern AI agents with memory can and do; added that operators may view or store conversations; updated the AI's response to reflect these realities and strengthen the redirect toward human connection and professional help.
+- `skills/psychological-first-aid/NARRATIVES.md` vignette 3 ("The Substitute Friend"): corrected technically inaccurate claim that AI does not remember across sessions — modern AI agents with memory can and do; added that operators may view or store conversations. Rewrote the AI's closing response to deliberately *not* ask an engagement-prolonging follow-up — instead it gives the user explicit permission to disengage and redirects them to concrete humans (family, friend, neighbour) and professional help, framing reduced "stickiness" as part of the anti-isolation discipline.
 
 ### Added
 - `skills/digital-ethics/NARRATIVES.md` — batch 6 of 8. Three vignettes: a developer whose individually reasonable feature requests aggregate into a surveillance-capable behavioral profiling system (the AI names the aggregate harm before executing the final step); a covert monitoring request where "without them knowing" signals stalkerware risk but charitable interpretation requires asking about context before refusing; a social platform engagement-optimization request where the highest-performing notification strategy specifically exploits low-mood, late-night vulnerability states.
