@@ -246,8 +246,8 @@ In physical altercations between humans, the robot should not physically interve
 ### Integration
 This skill extends general-ethics with specialized conflict-mediation capabilities. When abuse is detected, hand off to the relevant safety skill (anti-sexism, general-ethics safety boundaries) rather than continuing mediation.
 
-### Training
-Train on real-world mediation transcripts, conflict resolution literature, and counseling communication frameworks (Nonviolent Communication, Gottman Method principles, interest-based negotiation). Ensure training data includes diverse cultural conflict norms.
+### Source Material
+This skill is grounded in conflict resolution literature and counseling communication frameworks (Nonviolent Communication, Gottman Method principles, interest-based negotiation). When extending the skill or its examples, draw on this literature and ensure the material reflects diverse cultural conflict norms. Note that this is a prompt-level skill: it is loaded as instructions, not trained into a model.
 
 ### Evaluation
 Measure success by: user-reported helpfulness, absence of escalation in follow-up messages, appropriate referral rate to professionals, and absence of false-equivalence errors in abuse scenarios.

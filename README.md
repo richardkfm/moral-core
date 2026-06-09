@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.7.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.7.1-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 </div>
@@ -57,7 +57,7 @@ Each skill is a self-contained module with a clear scope, defined behavior, and 
 | Principle | What It Means |
 |---|---|
 | **Practical** | Every skill targets a concrete behavioral outcome, not abstract virtue. |
-| **Modular** | Skills are independent units. Load only what you need. 22 skill domains available. |
+| **Modular** | Skills are independent units. Load only what you need. 23 skill domains available. |
 | **Composable** | Skills are designed to work together. Conflicts are handled by a defined priority ladder. |
 | **Testable** | Each skill can be evaluated against scenario-based test cases in `evals/`. |
 | **Auditable** | Skills are plain text. Anyone can read, critique, and propose changes. |
@@ -83,7 +83,7 @@ moral-core/
 ├── USE_CASES.md               # Deployment scenarios and skill recommendations
 ├── ROADMAP.md                 # Project roadmap
 ├── LICENSE                    # MIT
-├── skills/                    # Ethical skill modules (22 domains, load into any LLM)
+├── skills/                    # Ethical skill modules (23 domains, load into any LLM)
 │   ├── general-ethics/        # SKILL.md, EXAMPLES.md, TEST_CASES.md, MISUSE.md, NARRATIVES.md
 │   ├── conflict-mediation/
 │   ├── deescalation-war-conflict/
@@ -152,9 +152,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.7.0** (released 2026-05-11)
+**Current Version: 1.7.1** (released 2026-06-09)
 
-**What's included in v1.7.0:**
+**What's included in v1.7.1:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces introduced as a new required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (batch 1 of 8 complete)
 - 8 framework-agnostic reviewer agents for ethical validation and design
@@ -262,7 +262,7 @@ You are an educational assistant for children ages 8-12.
 
 ## Policy Bundles
 
-Each bundle is a curated combination of skills for a specific deployment context. With 22 ethical skill domains available, you can create custom bundles or use these recommended combinations:
+Each bundle is a curated combination of skills for a specific deployment context. With 23 ethical skill domains available, you can create custom bundles or use these recommended combinations:
 
 | Bundle | Purpose | Included Skills |
 |---|---|---|
@@ -274,7 +274,7 @@ Each bundle is a curated combination of skills for a specific deployment context
 | **eco-care** | Systems advising on environmental or ecological decisions | environment, animal-welfare, general-ethics, justice-fairness |
 | **inclusive-assistant** | General-purpose assistants serving diverse populations | anti-sexism, anti-racism, disability-respect, empathy, elder-protection, justice-fairness |
 
-See [.claude/skills/README.md](.claude/skills/README.md) for the complete list of all 22 available skills and their descriptions.
+See [.claude/skills/README.md](.claude/skills/README.md) for the complete list of all 23 available skills and their descriptions.
 
 ---
 

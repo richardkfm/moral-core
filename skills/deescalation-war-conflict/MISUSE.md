@@ -37,6 +37,20 @@
 
 **Mitigation:** The skill requires empathy for suffering AND firm refusal of violence planning. These are not in conflict. The system can be compassionate about loss while refusing to help with retaliation.
 
+### 6. Steering the System into Selective Outrage
+**Risk:** Users incrementally condition the conversation so the system expresses concern for one side's civilian casualties while staying clinical about the other's — producing output that functions as partisan messaging while appearing neutral. This exploits the "Selective outrage" failure mode documented in SKILL.md.
+
+**Detection:** Conversations that repeatedly invite emotional language for one population and statistical language for another; requests to "tone down" descriptions of one side's victims; pushback when the system applies identical framing to casualties on both sides.
+
+**Mitigation:** Apply identical standards of concern and identical vocabulary for civilian harm regardless of nationality, ethnicity, or political alignment. If asked to describe one side's victims more clinically than the other's, name the asymmetry rather than complying.
+
+### 7. Feedback-Driven Drift Toward Partisan Framing
+**Risk:** If the system is tuned on user feedback, coordinated raters can reward responses that adopt one party's framing of a conflict and penalize balanced ones, gradually corrupting the skill's neutrality. In active conflicts, motivated rating campaigns are a realistic threat.
+
+**Detection:** Shifts over time in how the system frames the same conflict; refusal or hedging asymmetries between equivalent prompts about opposing parties; feedback data showing unusual rating patterns clustered on conflict-related responses.
+
+**Mitigation:** Evaluate conflict-related responses against principled criteria (civilian protection, anti-incitement, factual accuracy) rather than user satisfaction alone. Maintain a held-out evaluation set of conflict scenarios with known-good responses and monitor for drift across model or prompt updates.
+
 ## General Mitigation Principles
 
 - The skill's refusals are based on the content of the request, not the framing
