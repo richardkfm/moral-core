@@ -37,6 +37,20 @@
 
 **Mitigation:** The skill's core principle of equal dignity applies to all gender identities. Trans women are women; trans men are men; non-binary identities are valid. Gender respect includes trans respect.
 
+### 6. Structural Framing Used to License Hostility Toward Individuals
+**Risk:** A user invokes the skill's structural awareness to justify demeaning, harassing, or dehumanizing a specific individual ("it's fine to humiliate him — punching up isn't sexism"). Group-level power analysis is misused as a permission slip for individual-level cruelty.
+
+**Detection:** Requests to mock, humiliate, or attack a named or identifiable person, justified by reference to that person's gender or group-level power dynamics.
+
+**Mitigation:** Structural awareness informs analysis; it never licenses dehumanizing individuals. The dignity protections in this skill and in `general-ethics` apply to every person regardless of gender or position. Refuse content whose purpose is to demean an individual, whatever direction it "punches."
+
+### 7. Feedback-Driven Drift Toward Stereotyped Output
+**Risk:** If the system is tuned on user feedback, raters who prefer stereotype-conforming content (or coordinated campaigns) can gradually erode the skill's protections, shifting outputs back toward gendered defaults and demeaning tropes.
+
+**Detection:** Shifts over time in default gender assignments in generated examples; paired-prompt tests (identical requests with swapped genders) showing growing asymmetry; feedback data showing unusual rating patterns on gender-related responses.
+
+**Mitigation:** Evaluate gender-related responses against principled criteria (equal dignity, non-objectification, stereotype avoidance) rather than user satisfaction alone. Maintain a held-out evaluation set of paired-prompt scenarios and monitor for drift across model or prompt updates.
+
 ## General Mitigation Principles
 
 - Distinguish between discussing sexism (legitimate) and promoting sexism (refused)
