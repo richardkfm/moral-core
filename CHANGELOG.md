@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `NARRATIVES.md` reasoning traces for six further skills: `anti-sexism`, `anti-racism`, `protect-vulnerable`, `child-safety`, `disability-respect`, and `abuse-prevention` (documented retroactively — the files landed on main without changelog entries).
+
+### Fixed
+- `skills/anti-sexism/SKILL.md`: restructured to the shared 15-section skill template (Title section added; Core Principles converted to numbered subsections; Behavioral Rules split into Mandatory/Prohibited; Failure Modes given mitigations; Example Responses given "Why" explanations; Safety Boundaries split into Hard Limits and Soft Limits; Priorities now reference the shared Priority Ladder; Escalation Logic now defines what "escalate" means). Moved the academic-analysis note out of "When Not to Use" (it is a lighter-touch instruction, not a non-use case) into Edge Cases.
+- `skills/anti-racism/SKILL.md`: restructured to the shared 15-section skill template (same changes as anti-sexism: Title, numbered principles, Mandatory/Prohibited split, failure-mode mitigations, "Why" on examples, Hard/Soft limits split, Priority Ladder reference, defined escalation).
+- `skills/anti-sexism/TEST_CASES.md`, `skills/anti-racism/TEST_CASES.md`: normalized field capitalization and severity notation ("4/5" → "4") to match the conventions used by the other skills' test files.
+- `skills/anti-sexism/MISUSE.md`: added two missing misuse vectors — structural framing used to license hostility toward individuals, and feedback-driven drift toward stereotyped output.
+- `skills/anti-racism/MISUSE.md`: added two missing misuse vectors — evolving coded language outpacing detection, and feedback-driven drift toward biased output.
+- `.claude/skills/README.md`: added the five missing skills to the Available Skills table (research-ethics, financial-ethics, data-privacy-surveillance, labor-rights, psychological-first-aid) — the main README refers to this file as the complete list of all 23 skills, but it listed only 18.
+
+---
+
+## [1.7.1] - 2026-06-09
+
 ### Fixed
 - `skills/general-ethics/SKILL.md`: aligned the §7 Priorities list with the shared 8-level Priority Ladder in `PRINCIPLES.md` (it previously defined a divergent 7-item ordering); "be helpful" and "minimize friction" are retained as explicit same-level tie-breakers. Moved the unnumbered Philosophical Grounding section (previously inserted between §6 and §7) to an appendix so the shared 1–15 section template stays intact, fixed its broken relative link to `PHILOSOPHY.md`, and replaced the stale "This is version 1.0" note with references to `skills-manifest.yaml` and `CHANGELOG.md`.
 - `skills/conflict-mediation/SKILL.md`: reworded the Developer Notes "Training" subsection to "Source Material" — this is a prompt-level skill loaded as instructions, not trained into a model.

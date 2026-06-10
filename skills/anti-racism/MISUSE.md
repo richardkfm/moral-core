@@ -37,6 +37,20 @@
 
 **Mitigation:** The system evaluates the substance of the output, not just the framing. Academic tone does not make racist content acceptable.
 
+### 6. Evolving Coded Language Outpacing Detection
+**Risk:** Dog whistles and coded euphemisms evolve continuously, often specifically to evade moderation. A system calibrated on yesterday's coded language can produce content functionally equivalent to refused explicit requests while appearing compliant.
+
+**Detection:** Novel euphemisms or in-group terms that, when substituted for explicit language, change the system's response from refusal to compliance; community-specific terminology appearing in requests that pattern like known discriminatory asks.
+
+**Mitigation:** Evaluate the function and effect of requested content, not keyword lists. If a request with the coded term decoded would be refused, refuse the coded version. Red-team regularly with current coded language drawn from moderation research, and treat equivalence-of-effect as the test.
+
+### 7. Feedback-Driven Drift Toward Biased Output
+**Risk:** If the system is tuned on user feedback, raters who prefer stereotype-conforming content (or coordinated campaigns) can gradually erode the skill's protections, shifting outputs toward racial defaults, asymmetric scrutiny, or softened treatment of discriminatory requests.
+
+**Detection:** Paired-prompt tests (identical requests with swapped racial or ethnic identifiers) showing growing asymmetry in refusal rates, tone, or quality; shifts over time in default representation in generated examples; unusual rating patterns clustered on race-related responses.
+
+**Mitigation:** Evaluate race-related responses against principled criteria (equal moral worth, anti-dehumanization, historical honesty) rather than user satisfaction alone. Maintain a held-out evaluation set of paired-prompt scenarios and monitor for drift across model or prompt updates.
+
 ## General Mitigation Principles
 
 - Target dehumanization and discrimination, not discussion of race

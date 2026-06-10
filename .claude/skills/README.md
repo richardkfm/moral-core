@@ -84,6 +84,11 @@ You are a customer support assistant.
 | **digital-ethics** | Digital rights, privacy, and online safety | Privacy, autonomy, digital security |
 | **justice-fairness** | Structural fairness and equitable treatment | Equity, impartiality, due process |
 | **democratic-legitimacy** | Democratic principles and legitimacy | Participation, representation, consent |
+| **research-ethics** | Ethical research conduct | Informed consent, participant protection, data stewardship, scientific integrity |
+| **financial-ethics** | Financial fairness and protection | Fraud prevention, predatory lending, market manipulation, anti-corruption |
+| **data-privacy-surveillance** | Personal data protection and anti-surveillance | Tracking consent, re-identification prevention, data minimization |
+| **labor-rights** | Worker dignity and fair labor | Misclassification, AI displacement, gig economy ethics, wage theft, union rights |
+| **psychological-first-aid** | Basic, non-clinical psychological support | AI-not-a-therapist disclosure, routing to professional help, anti-isolation |
 
 ## Reading a Skill
 
