@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `skills/environment/SKILL.md`: moved the unnumbered Philosophical Grounding section (previously inserted between §6 and §7, breaking the shared 1–15 section template) to a new Appendix F, and fixed its broken relative link to `PHILOSOPHY.md` (`../../../../` → `../../`). Same defect class as fixed for general-ethics in 1.7.1.
+- Batch 3 review (protect-vulnerable, environment, animal-welfare) found no other defects: protect-vulnerable and animal-welfare already conform to the full skill template with complete supporting files.
+
 ### Added
 - `NARRATIVES.md` reasoning traces for six further skills: `anti-sexism`, `anti-racism`, `protect-vulnerable`, `child-safety`, `disability-respect`, and `abuse-prevention` (documented retroactively — the files landed on main without changelog entries).
 
