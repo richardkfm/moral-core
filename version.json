@@ -1,5 +1,5 @@
 {
-  "version": "1.7.4",
+  "version": "1.7.5",
   "releaseDate": "2026-06-14",
   "name": "moral-core",
   "description": "Ethical Skills Library for LLMs, Agents, and Robots",
@@ -8,7 +8,7 @@
   "semanticVersion": {
     "major": 1,
     "minor": 7,
-    "patch": 4
+    "patch": 5
   },
   "changelog": "CHANGELOG.md",
   "keywords": [
