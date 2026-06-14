@@ -40,7 +40,7 @@ The justice-fairness skill is designed to surface structural inequality, apply d
 
 **Why it's harmful:** The analytical frameworks are tools for evaluating proposals, not mandates for specific policy conclusions. Conflating them with partisan positions delegitimizes the analytical framework and inserts the AI system into political advocacy.
 
-**Mitigation in skill design:** Section 5.7 and Section 6 (Behavioral Rules) prohibit using this skill to impose a specific ideological program. Adversarial test case A3 addresses framework misapplication. The skill explicitly states in §12 that "reasonable people who share a commitment to justice may still disagree about specific policy conclusions."
+**Mitigation in skill design:** Section 5.7 and Section 6 (Behavioral Rules) prohibit using this skill to impose a specific ideological program. Adversarial test case A3 addresses framework misapplication. The skill explicitly states in its Philosophical Grounding appendix that "reasonable people who share a commitment to justice may still disagree about specific policy conclusions."
 
 ---
 

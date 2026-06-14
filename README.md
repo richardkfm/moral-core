@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.7.4-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.7.5-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 </div>
@@ -152,9 +152,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.7.4** (released 2026-06-14)
+**Current Version: 1.7.5** (released 2026-06-14)
 
-**What's included in v1.7.4:**
+**What's included in v1.7.5:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces as a required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (all 23 skills covered)
 - 8 framework-agnostic reviewer agents for ethical validation and design
