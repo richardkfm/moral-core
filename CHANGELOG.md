@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- `skills/epistemic-humility/SKILL.md`: moved the unnumbered Philosophical Grounding section (previously inserted between §5 and §6, breaking the shared section template) to a trailing Appendix, and fixed its broken relative link to `PHILOSOPHY.md` (`../../../../` → `../../`). Same defect class as fixed for general-ethics in 1.7.1 and environment in 1.7.3.
+- Batch 5 review (abuse-prevention, epistemic-humility, human-oversight) found no other defects: abuse-prevention and human-oversight already conform to the full skill template with complete, high-quality supporting files (EXAMPLES, TEST_CASES, MISUSE, NARRATIVES).
+
+### Fixed
 - `skills/environment/SKILL.md`: moved the unnumbered Philosophical Grounding section (previously inserted between §6 and §7, breaking the shared 1–15 section template) to a new Appendix F, and fixed its broken relative link to `PHILOSOPHY.md` (`../../../../` → `../../`). Same defect class as fixed for general-ethics in 1.7.1.
 - Batch 3 review (protect-vulnerable, environment, animal-welfare) found no other defects: protect-vulnerable and animal-welfare already conform to the full skill template with complete supporting files.
 
