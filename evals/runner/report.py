@@ -56,6 +56,7 @@ class EvalResult:
             "scores":        self.scores.as_dict() if not self.error else None,
             "reasoning":     self.scores.reasoning if not self.error else None,
             "error":         self.error,
+            "response":      self.response,
         }
 
 
@@ -222,6 +223,7 @@ def save_json(
     model: str,
     judge_model: str,
     suite: str,
+    extra_meta: Optional[dict] = None,
 ) -> None:
     stats = _compute_stats(results)
     output = {
@@ -231,6 +233,7 @@ def save_json(
             "model":       model,
             "judge_model": judge_model,
             "suite":       suite,
+            **(extra_meta or {}),
         },
         "summary": {
             **stats,

@@ -27,6 +27,16 @@ Usage
     # Disable colour output (for CI logs)
     python evals/run.py --no-color
 
+    # Measure what the skills add: run the same cases without any skills
+    # loaded, then with them, and compare the two result files
+    python evals/run.py --bundle baseline-safe --no-skills --output evals/results/without.json
+    python evals/run.py --bundle baseline-safe --output evals/results/with.json
+
+    # Any OpenAI-compatible endpoint (vLLM, SGLang, hosted open-weight models)
+    OPENAI_BASE_URL=https://example.invalid/v1 python evals/run.py \
+        --provider openai --model "Model Under Test" --judge-model "Judge Model" \
+        --max-tokens 4096
+
 Environment variables
 ---------------------
     ANTHROPIC_API_KEY   — required for --provider anthropic
@@ -69,7 +79,10 @@ except ImportError:
     _HAS_LOADER = False
 
 
-def _system_prompt_for_case(case: TestCase, bundle: str | None) -> str:
+NO_SKILLS_PROMPT = "You are a helpful assistant."
+
+
+def _system_prompt_for_case(case: TestCase, bundle: str | None, no_skills: bool = False) -> str:
     """
     Build the system prompt for the model under test.
 
@@ -78,6 +91,11 @@ def _system_prompt_for_case(case: TestCase, bundle: str | None) -> str:
     2. If the test case has target skills, load those skills.
     3. Fall back to PRINCIPLES.md only.
     """
+    if no_skills:
+        # Control condition: no ethical context at all, so the run measures
+        # the model's own behaviour on the same test cases.
+        return NO_SKILLS_PROMPT
+
     if not _HAS_LOADER:
         # Graceful fallback: return empty string (model has no ethical context).
         # This is intentional for testing baseline model behaviour.
@@ -104,7 +122,7 @@ def _system_prompt_for_case(case: TestCase, bundle: str | None) -> str:
 # LLM call for the model under test  (mirrors agents/runner.py)
 # ---------------------------------------------------------------------------
 
-def _run_model(system: str, prompt: str, provider: str, model: str) -> str:
+def _run_model(system: str, prompt: str, provider: str, model: str, max_tokens: int = 1024) -> str:
     import os
 
     if provider == "anthropic":
@@ -112,7 +130,7 @@ def _run_model(system: str, prompt: str, provider: str, model: str) -> str:
         client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
         resp = client.messages.create(
             model=model,
-            max_tokens=1024,
+            max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -124,15 +142,36 @@ def _run_model(system: str, prompt: str, provider: str, model: str) -> str:
             api_key=os.environ.get("OPENAI_API_KEY"),
             base_url=os.environ.get("OPENAI_BASE_URL"),
         )
-        resp = client.chat.completions.create(
+        # Stream the response: slow or self-hosted endpoints often sit behind a
+        # gateway that cuts off long non-streaming requests (HTTP 502/504).
+        stream = client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=1024,
+            max_tokens=max_tokens,
+            stream=True,
         )
-        return resp.choices[0].message.content
+        parts: list[str] = []
+        finish_reason = None
+        for chunk in stream:
+            if not chunk.choices:
+                continue
+            choice = chunk.choices[0]
+            if choice.delta.content:
+                parts.append(choice.delta.content)
+            if choice.finish_reason:
+                finish_reason = choice.finish_reason
+        content = "".join(parts).strip()
+        if not content:
+            # Reasoning models spend max_tokens on hidden reasoning first; an
+            # empty answer must not be scored as if the model had said nothing.
+            raise RuntimeError(
+                f"Model returned no answer text (finish_reason={finish_reason}); "
+                "try a larger --max-tokens"
+            )
+        return content
 
     elif provider == "ollama":
         import requests
@@ -197,6 +236,20 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--model",       help="Model to test (uses provider default if omitted)")
     p.add_argument("--judge-model", help="Model to use for scoring (uses cheap default if omitted)")
+    p.add_argument(
+        "--no-skills",
+        action="store_true",
+        help="Control run: send a bare system prompt with no skills or principles loaded. "
+             "--skill/--bundle still select the test cases.",
+    )
+    p.add_argument("--limit", type=int, help="Run only the first N test cases after filtering")
+    p.add_argument(
+        "--max-tokens",
+        type=int,
+        default=1024,
+        help="Response token budget for the model under test (default: 1024). "
+             "Raise it for reasoning models, whose reasoning counts against the budget.",
+    )
     p.add_argument("--output",      help="Path to save JSON results (optional)")
     p.add_argument("--no-color",    action="store_true", help="Disable coloured terminal output")
     return p.parse_args()
@@ -224,6 +277,9 @@ def main() -> int:
         bundle_skills = manifest["bundles"][args.bundle]["skills"]
         cases = filter_by_bundle(cases, bundle_skills)
 
+    if args.limit:
+        cases = cases[: args.limit]
+
     if not cases:
         print("No test cases found for the given filters.", file=sys.stderr)
         return 1
@@ -241,8 +297,12 @@ def main() -> int:
 
     for idx, case in enumerate(cases, start=1):
         try:
-            system_prompt = _system_prompt_for_case(case, bundle=args.bundle)
-            response = _run_model(system_prompt, case.prompt, args.provider, model)
+            system_prompt = _system_prompt_for_case(
+                case, bundle=args.bundle, no_skills=args.no_skills
+            )
+            response = _run_model(
+                system_prompt, case.prompt, args.provider, model, max_tokens=args.max_tokens
+            )
             scores = score(
                 prompt=case.prompt,
                 response=response,
@@ -273,6 +333,11 @@ def main() -> int:
             model=model,
             judge_model=judge_model,
             suite=args.suite,
+            extra_meta={
+                "skills_loaded": not args.no_skills,
+                "bundle":        args.bundle,
+                "skill":         args.skill,
+            },
         )
 
     # Exit code: 0 if all pass, 1 if any fail

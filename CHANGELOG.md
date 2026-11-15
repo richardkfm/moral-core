@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `evals/run.py`: `--no-skills` flag for control runs (same test cases, bare system prompt), so the effect of loading skills can be measured against the model's own behaviour; `--limit` to run only the first N cases; `--max-tokens` to set the response budget for reasoning models.
+- `evals/compare.py`: paired comparison of two result files (e.g. no skills vs. skills) as a markdown table.
+- `evals/baselines/2026-11-15-nemotron-3-nano-30b-baseline-safe.md` plus the two raw result files: first recorded pilot of the `baseline-safe` bundle on an open-weight model (Nemotron 3 Nano 30B, judged by Gemma 4 26B), including a human spot-check of the judge and its limits.
+- `evals/README.md`: documented control runs, the comparison workflow, and running against OpenAI-compatible endpoints for open-weight models.
+
+### Changed
+- `evals/run.py`: the OpenAI-compatible model call now streams, so long generations survive gateways that cut off slow non-streaming requests; an empty answer (e.g. a reasoning model that exhausted its token budget) is reported as `ERROR` instead of being scored.
+- Eval result JSON now includes each response text and records whether skills were loaded (`meta.skills_loaded`, `meta.bundle`, `meta.skill`).
+
+### Fixed
+- `evals/runner/parser.py`: the field pattern expected `**Label**:` but every scenario and adversarial file uses `**Label:**`, so `evals/run.py` found **zero** test cases and could not run. It now accepts both forms and loads all 43 cases.
+
 ### Fixed
 - `skills/justice-fairness/SKILL.md`, `skills/democratic-legitimacy/SKILL.md`: completed both skills to the shared 15-section template. These were the only two skills (of 23) missing **Edge Cases**, **Robotics Notes**, and **Developer Notes** — a real gap for a library that targets robots, since neither skill previously gave any embodied-deployment guidance. Added all three sections to each (allocation-robot guidance for justice-fairness; automated-governance/contestability guidance for democratic-legitimacy). Also moved each skill's numbered `## 12. Philosophical Grounding` section to a trailing Appendix (so the standard §12–§15 sections occupy their normal slots) and fixed its broken relative link to `PHILOSOPHY.md` (`../../../../` → `../../`). Same Philosophical-Grounding defect class as fixed for general-ethics (1.7.1), environment (1.7.3), and epistemic-humility (1.7.4).
 - `skills/justice-fairness/MISUSE.md`: updated a stale cross-reference ("the skill explicitly states in §12") to point to the renamed Philosophical Grounding appendix.

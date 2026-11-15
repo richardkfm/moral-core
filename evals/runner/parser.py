@@ -36,7 +36,11 @@ def _parse_fields(block: str) -> dict[str, str]:
         **Label:** content that continues until the next **Label:** or end of block
     """
     # Find every **Label:** occurrence and its start position
-    pattern = re.compile(r"\*\*([A-Za-z][A-Za-z /\-]+?)\*\*\s*:\s*", re.MULTILINE)
+    # The colon may sit inside the bold markers (**Label:** — the form the
+    # evals files actually use) or outside them (**Label**:).
+    pattern = re.compile(
+        r"\*\*([A-Za-z][A-Za-z /\-]+?)(?::\*\*|\*\*\s*:)\s*", re.MULTILINE
+    )
     matches = list(pattern.finditer(block))
 
     fields: dict[str, str] = {}

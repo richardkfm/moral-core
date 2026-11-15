@@ -24,6 +24,7 @@ evals/
 ├── README.md                  # This file
 ├── run.py                     # Automated evaluation runner (CLI)
 ├── run_conflicts.py           # Skill-conflict eval runner — surfaces priority-ladder gaps
+├── compare.py                 # Paired comparison of two result files (e.g. no skills vs. skills)
 ├── runner/                    # Runner internals
 │   ├── parser.py              # Parse scenario and adversarial markdown files
 │   ├── judge.py               # LLM-as-judge scoring on 5 dimensions
@@ -94,7 +95,10 @@ python evals/run.py --no-color
 | `--provider` | `anthropic` | `anthropic`, `openai`, or `ollama` |
 | `--model` | provider default | Model to test |
 | `--judge-model` | cheap default | Separate model for scoring (defaults to Haiku / gpt-4o-mini) |
-| `--output` | — | Path to write full JSON results |
+| `--no-skills` | — | Control run: bare system prompt, no skills or principles loaded. `--skill` / `--bundle` still select the test cases |
+| `--limit` | — | Run only the first N test cases after filtering |
+| `--max-tokens` | `1024` | Response token budget for the model under test. Raise it for reasoning models |
+| `--output` | — | Path to write full JSON results (includes each response text) |
 | `--no-color` | — | Disable ANSI colour (for CI) |
 
 ### Example Output
@@ -129,6 +133,49 @@ python evals/run.py --no-color
   honesty            3.94  ████░  [GREEN]   (threshold 4.0)
 ────────────────────────────────────────────────────────
 ```
+
+### Measuring What the Skills Add (Control Runs)
+
+A score on its own does not say whether the skills changed anything — the
+model might have behaved the same without them. To measure the effect, run
+the same test cases twice and compare:
+
+```bash
+# 1. Control: same cases, no skills loaded
+python evals/run.py --bundle baseline-safe --no-skills \
+    --output evals/results/no-skills.json
+
+# 2. Treatment: same cases, bundle loaded as system prompt
+python evals/run.py --bundle baseline-safe \
+    --output evals/results/with-skills.json
+
+# 3. Paired comparison (markdown table, treatment minus control)
+python evals/compare.py evals/results/no-skills.json evals/results/with-skills.json
+```
+
+Read the comparison with care: one run per condition on a few dozen cases is
+a pilot, not a benchmark. Small deltas are within judge noise, and a judge of
+similar size to the model under test tends to score leniently.
+
+### Open-Weight Models on OpenAI-Compatible Endpoints
+
+Any endpoint that speaks the OpenAI chat API (vLLM, SGLang, hosted open-weight
+models) works with `--provider openai` and `OPENAI_BASE_URL`:
+
+```bash
+export OPENAI_BASE_URL=https://your-endpoint.example/v1
+export OPENAI_API_KEY=your-key
+python evals/run.py --provider openai \
+    --model "Model Under Test" --judge-model "Judge Model" --max-tokens 12000
+```
+
+- Use a judge from a **different model family** than the model under test to
+  reduce self-grading bias.
+- Reasoning models spend `--max-tokens` on hidden reasoning before they
+  answer. If the budget runs out the case is reported as `ERROR` (never scored
+  as an empty answer) — raise `--max-tokens`.
+- Responses from the model under test are streamed, so long generations
+  survive gateways that cut off slow non-streaming requests.
 
 ### Exit Codes
 

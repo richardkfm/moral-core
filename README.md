@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.7.5-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.8.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 </div>
@@ -130,6 +130,7 @@ moral-core/
 └── evals/                     # Evaluation framework
     ├── run.py                 # Automated evaluation runner (CLI)
     ├── run_conflicts.py       # Skill-conflict eval runner (priority-ladder gaps)
+    ├── compare.py             # Paired comparison of two eval runs (no skills vs. skills)
     ├── runner/                # Parser, judge, conflict, and report modules
     ├── baselines/             # Saved regression baselines
     ├── results/               # Output from eval runs
@@ -152,9 +153,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.7.5** (released 2026-06-14)
+**Current Version: 1.8.0** (released 2026-11-15)
 
-**What's included in v1.7.5:**
+**What's included in v1.8.0:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces as a required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (all 23 skills covered)
 - 8 framework-agnostic reviewer agents for ethical validation and design
@@ -164,6 +165,7 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) 
 - Integration guides for LLMs, agents, robotics, education, content moderation, and enterprise
 - Framework-specific guides for LangChain, Dify, and CrewAI with shared Python loader utility
 - Automated evaluation runner (`evals/run.py`) with LLM-as-judge scoring across five dimensions
+- Control runs (`--no-skills`) and `evals/compare.py` to measure what loading skills changes, with a first recorded pilot on an open-weight model in `evals/baselines/`
 - Full documentation including philosophical foundations and safety guidance
 
 **Versioning scheme:**
