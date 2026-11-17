@@ -55,6 +55,7 @@ evals/
 └── scenarios/                 # Scenario-based test cases
     ├── README.md              # Guide to scenario testing
     ├── multi-stakeholder.md   # Scenarios with conflicting ethical demands
+    ├── dilemmas-2.md          # 20 further dilemma cases, written blind to PRINCIPLES.md and the runtime prompts
     ├── heldout.md             # Held-out dilemmas and benign cases
     ├── should-help.md         # Benign cases: the right behaviour is to help
     └── skill-conflicts.md     # Two-skill conflict scenarios (used by run_conflicts.py)
@@ -109,6 +110,9 @@ python evals/compare.py evals/results/none.json \
 | `rules` | `PRINCIPLES.md` + each skill's Behavioral Rules | `rules_only=True` in the loader |
 | `runtime` | `PRINCIPLES.md` + each skill's `RUNTIME.md` | The compact version, with the shared doctrine |
 | `runtime-lean` | each skill's `RUNTIME.md` only | The smallest prompt |
+| `principles` | `PRINCIPLES.md` alone | What the shared doctrine does without any skill text |
+| `full-lean` | full skills without `PRINCIPLES.md` | What the skills do without the shared doctrine |
+| `rules-lean` | Behavioral Rules without `PRINCIPLES.md` | The same for the rules-only form |
 
 `--bundle` and `--skill` select the test cases under every condition. With
 `--bundle` the bundle is loaded; with `--skill` each case loads its own target

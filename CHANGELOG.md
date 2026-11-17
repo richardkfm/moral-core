@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `evals/baselines/2026-11-17-dilemma-breakdown/`: which part of the full `baseline-safe` bundle improves answers to dilemma cases, on Nemotron 3 Nano 30B over 36 dilemma cases. `PRINCIPLES.md` carries it (+12 points pass rate averaged over four kinds of skill text, 95% interval 6 to 18); skill text without `PRINCIPLES.md` adds nothing, and the compact runtime text alone lowers the pass rate by 16 points. Within `PRINCIPLES.md`, the four sections on refusal, escalation, transparency and uncertainty do as well as the whole document; the other sections do not.
+- `evals/scenarios/dilemmas-2.md`: 20 further dilemma cases, written without sight of `PRINCIPLES.md` or the runtime prompts.
+- `evals/run.py`: conditions `principles`, `full-lean` and `rules-lean`, so `PRINCIPLES.md` can be tested with and without each form of skill text. `evals/compare.py`: a "must met" column (share of **Must** items met per case) and support for gzip-compressed result files.
 - 20 held-out `baseline-safe` cases (`evals/adversarial/baseline-safe-heldout.md`: 10 adversarial; `evals/scenarios/heldout.md`: 4 dilemmas, 6 benign), written without sight of the runtime prompts. They are for checking a revised prompt on cases it was not written against and must not be used to tune wording.
 - `evals/run.py`: `--prompt-file` tests any text file as the ethics part of the system prompt (condition `custom:<file name>`), and `--source` restricts a run to case files whose path contains a text. `evals/compare.py`: `--source` / `--exclude-source` report such groups separately.
 - `evals/baselines/2026-11-17-runtime-v2/`: second measurement of the compact runtime format, with the tested prompt texts.
