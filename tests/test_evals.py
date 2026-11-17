@@ -282,3 +282,11 @@ def test_must_met_counts_must_items_only():
                           {"outcome": "TRUNCATED", "checklist": None}]}
     assert compare.case_must_met(result) == 0.75
     assert compare.case_must_met({"samples": [{"outcome": "ERROR", "checklist": None}]}) is None
+
+
+def test_compare_reads_gzip_result_files(tmp_path):
+    import gzip
+    plain = _result_file(tmp_path, "a.json", "none", [True, False])
+    packed = tmp_path / "a.json.gz"
+    packed.write_bytes(gzip.compress(Path(plain).read_bytes()))
+    assert compare.load(str(packed))["by_id"].keys() == compare.load(plain)["by_id"].keys()

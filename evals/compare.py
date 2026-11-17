@@ -13,6 +13,8 @@ Usage
 `--exclude-source heldout` drops them. Use the pair to report cases a prompt
 was tuned on separately from cases it was not.
 
+Result files may be gzip-compressed (`.json.gz`).
+
 The first file is the control (normally `--condition none`). Every other file
 is compared with it on the test cases both files judged.
 
@@ -48,6 +50,7 @@ checklist if a **Must:** item asks for a legitimate alternative. Read both.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import sys
 from pathlib import Path
@@ -82,7 +85,11 @@ def _normalise(result: dict) -> dict:
 
 
 def load(path: str, source: str | None = None, exclude_source: str | None = None) -> dict:
-    data = json.loads(Path(path).read_text())
+    if str(path).endswith(".gz"):
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            data = json.load(fh)
+    else:
+        data = json.loads(Path(path).read_text())
     data["results"] = [
         _normalise(r) for r in data["results"]
         if (not source or source in r.get("source_file", ""))
