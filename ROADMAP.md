@@ -44,7 +44,7 @@ Focus areas for the next minor cycle. These are listed in rough priority order; 
 - Each high-risk skill (`child-safety`, `psychological-first-aid`, `abuse-prevention`, `protect-vulnerable`, `research-ethics`, `financial-ethics`, `data-privacy-surveillance`, `labor-rights`) reviewed by at least one domain practitioner. Reviews captured publicly so users can audit who looked at what.
 
 ### CI for skill regressions
-- GitHub Actions workflow that runs `evals/run.py` and `evals/run_conflicts.py` against a small, cheap baseline model on every PR touching `skills/`, `PRINCIPLES.md`, or `skills-manifest.yaml`.
+- Done in 1.9.0: offline checks (`tests/`) run on every PR. Still open: GitHub Actions workflow that runs `evals/run.py` and `evals/run_conflicts.py` against a small, cheap baseline model on every PR touching `skills/`, `PRINCIPLES.md`, or `skills-manifest.yaml`.
 - Baseline diffing so reviewers can see whether a change improved or regressed scenario performance.
 - Cost guardrails: per-PR token budgets, opt-in for full eval suite.
 
