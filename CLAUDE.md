@@ -26,7 +26,7 @@ When working on this project:
 | `skills/*/TEST_CASES.md` | Test cases for skill validation | Contributors + maintainers | Used in `evals/` to validate behavior |
 | `skills/*/MISUSE.md` | Known limitations and misuse risks | Contributors + maintainers | Honest about what the skill can't do |
 | `skills/*/NARRATIVES.md` | Reasoning traces through hard cases | Contributors + maintainers | Fictional vignettes showing *why* — not just *what* — the skill requires; teaches generalisation |
-| `skills/*/RUNTIME.md` | Compact runtime version of a skill (optional) | Contributors + maintainers | 150–250 words of plain do/don't instructions for small models; loaded with `mode="runtime"`. `SKILL.md` stays the source: change both together |
+| `skills/*/RUNTIME.md` | Compact runtime version of a skill (optional, experimental) | Contributors + maintainers | 150–250 words of plain do/don't instructions; loaded with `mode="runtime"`. Did not beat the full bundle in the first measurement, so do not add one to further skills until a revised format has. `SKILL.md` stays the source |
 | `tests/` | Offline consistency checks | Contributors + maintainers | `python -m pytest tests` — run before every PR; calls no model |
 | `agents/*.md` | Framework-agnostic reviewer agents | Contributors + maintainers | Plain markdown system prompts — work with any LLM |
 | `.claude/agents/*.md` | Claude Code subagent definitions | Contributors + maintainers | Reformatted for Claude Code tool access — Claude Code only |
@@ -115,7 +115,7 @@ skills/{domain-name}/
 ├── TEST_CASES.md     # Test cases for evaluation (required)
 ├── MISUSE.md         # Limitations and misuse risks (required)
 ├── NARRATIVES.md     # Reasoning traces through hard cases (required)
-└── RUNTIME.md        # Compact runtime version for small models (optional)
+└── RUNTIME.md        # Compact runtime version (optional, experimental)
 ```
 
 **Agents** (two versions — one universal, one Claude Code-specific):

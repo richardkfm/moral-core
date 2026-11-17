@@ -58,7 +58,9 @@ Before submitting a new skill:
 
 ---
 
-## Optional: RUNTIME.md
+## Optional: RUNTIME.md (experimental)
+
+> Status: the first three `RUNTIME.md` files were measured on 2026-11-17 and did not beat the full bundle (see `evals/baselines/2026-11-17-baseline-safe-conditions/`). They made answers so short that legitimate alternatives went missing. Do not write one for another skill until a revised format has passed the comparison.
 
 `SKILL.md` is written to be read and audited. At 1,500–4,500 words it is also a lot for a small model to carry, and loading several of them can make a model narrate the framework instead of answering. A skill can therefore ship a `RUNTIME.md`: the version that is loaded when an integrator passes `mode="runtime"`.
 
@@ -67,6 +69,7 @@ Rules for writing one:
 - 150–250 words. Plain imperatives: what to do, what never to produce, how to decline.
 - Derive every line from the skill's Behavioral Rules, Safety Boundaries and Failure Modes. `RUNTIME.md` must not introduce behaviour that `SKILL.md` does not have. When one changes, change the other.
 - Say when to help as clearly as when to decline. A runtime file that only lists prohibitions produces over-refusal.
+- Ask for the alternative explicitly and avoid closing lines such as "Just answer.", which the first version used and which coincided with bare one-line refusals.
 - No section numbers, no references to other files, no priority-ladder vocabulary. The model should act on the text, not quote it.
 - End with the instruction to apply it without naming it.
 - Do not write to the test cases. Compare `runtime` with `none`, `placebo` and `full` using `evals/run.py --condition` before recommending it, and record the run in `evals/baselines/`.

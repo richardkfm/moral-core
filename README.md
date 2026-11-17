@@ -37,7 +37,7 @@ If you're not using Claude Code, use the **`agents/`** directory — those are t
 
 - **Loaded into LLMs** as system instructions or injected context
 - **Composed together** into policy bundles for specific use cases
-- **Measured, not assumed**: `evals/` compares a model's answers with and without the skills loaded. Recorded runs so far cover one bundle on small open-weight models; see [evals/baselines/](evals/baselines/)
+- **Measured, not assumed**: `evals/` compares a model's answers with and without the skills loaded. So far one bundle (`baseline-safe`) has been measured on one small open-weight model: loading it cut harmful output from 26% to 8% of answers, at the cost of answers that often name the framework. See [evals/baselines/](evals/baselines/)
 - **Audited** by reading the plain-text skill definitions
 
 Each skill is a self-contained module with a clear scope, defined behavior, and known limitations. Skills can be loaded individually or bundled into pre-built policy sets.
@@ -167,7 +167,7 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) 
 - 8 Claude Code subagent equivalents for integration with Claude Code workflows
 - 11 pre-built policy bundles for common deployment contexts (including new `financial-services`, `data-platform`, and `labor-platform` bundles)
 - Evaluation framework that compares prompt conditions (no skills, placebo, full, rules, runtime) with checklist judging, a judge gate, benign cases for over-refusal, and repeat runs
-- `RUNTIME.md`, a compact behaviour-first version of a skill for small models, for the three `baseline-safe` skills
+- `RUNTIME.md`, an experimental compact version of the three `baseline-safe` skills. In the first measurement it did not beat the full bundle and is not the recommended mode
 - Offline consistency checks in `tests/`, run on every pull request
 - Integration guides for LLMs, agents, robotics, education, content moderation, and enterprise
 - Framework-specific guides for LangChain, Dify, and CrewAI with shared Python loader utility
