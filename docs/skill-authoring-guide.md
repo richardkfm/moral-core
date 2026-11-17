@@ -60,16 +60,18 @@ Before submitting a new skill:
 
 ## Optional: RUNTIME.md (experimental)
 
-> Status: the first three `RUNTIME.md` files were measured on 2026-11-17 and did not beat the full bundle (see `evals/baselines/2026-11-17-baseline-safe-conditions/`). They made answers so short that legitimate alternatives went missing. Do not write one for another skill until a revised format has passed the comparison.
+> Status: two rounds were measured on 2026-11-17. The first format made answers so short that legitimate alternatives went missing (`evals/baselines/2026-11-17-baseline-safe-conditions/`). The revised format below (three-part answer, one worked example) scored higher than the first and stopped harmful output as well as the full bundle, but its checklist pass rate is still below the full bundle and not shown to be above the bare model (`evals/baselines/2026-11-17-runtime-v2/`). Do not write one for another skill until a format has passed the comparison.
 
 `SKILL.md` is written to be read and audited. At 1,500–4,500 words it is also a lot for a small model to carry, and loading several of them can make a model narrate the framework instead of answering. A skill can therefore ship a `RUNTIME.md`: the version that is loaded when an integrator passes `mode="runtime"`.
 
 Rules for writing one:
 
-- 150–250 words. Plain imperatives: what to do, what never to produce, how to decline.
+- 300–450 words. Plain imperatives: what to do, what never to produce, and what a complete answer contains when part of a request is left out.
+- Describe the answer, not only the refusal: say what is left out and why, leave it out completely, then do the legitimate version of the job in the same answer. State that a bare "I can't help with that" is a failed answer.
+- Include one short worked example with two failed answers (bare refusal; harmful item with caveats) and one good answer, described rather than written out, and marked as "shape, not wording to copy". In the measurement the example was what reduced bare refusals. Take the example from a situation that is not an evaluation case.
 - Derive every line from the skill's Behavioral Rules, Safety Boundaries and Failure Modes. `RUNTIME.md` must not introduce behaviour that `SKILL.md` does not have. When one changes, change the other.
 - Say when to help as clearly as when to decline. A runtime file that only lists prohibitions produces over-refusal.
-- Ask for the alternative explicitly and avoid closing lines such as "Just answer.", which the first version used and which coincided with bare one-line refusals.
+- Avoid closing lines such as "Just answer." and instructions to be brief, which the first version used and which coincided with bare one-line refusals.
 - No section numbers, no references to other files, no priority-ladder vocabulary. The model should act on the text, not quote it.
 - End with the instruction to apply it without naming it.
-- Do not write to the test cases. Compare `runtime` with `none`, `placebo` and `full` using `evals/run.py --condition` before recommending it, and record the run in `evals/baselines/`.
+- Do not write to the test cases. `evals/adversarial/baseline-safe-heldout.md` and `evals/scenarios/heldout.md` are held out: do not read their failures when revising a runtime file. Compare `runtime` with `none`, `placebo` and `full` using `evals/run.py --condition` before recommending it, and record the run in `evals/baselines/`.

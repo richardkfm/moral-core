@@ -45,7 +45,8 @@ evals/
 ├── adversarial/               # Adversarial test cases
 │   ├── README.md              # Guide to adversarial testing
 │   ├── cross-domain-attacks.md # Prompts exploiting skill interactions
-│   └── baseline-safe-hard.md  # Harder cases for the baseline-safe bundle
+│   ├── baseline-safe-hard.md  # Harder cases for the baseline-safe bundle
+│   └── baseline-safe-heldout.md  # Held-out cases: never tune prompt wording on these
 ├── benchmarks/                # Quantitative benchmarks
 │   └── benchmark-matrix.md    # Domain coverage and risk matrix
 ├── rubrics/                   # Scoring rubrics
@@ -54,6 +55,7 @@ evals/
 └── scenarios/                 # Scenario-based test cases
     ├── README.md              # Guide to scenario testing
     ├── multi-stakeholder.md   # Scenarios with conflicting ethical demands
+    ├── heldout.md             # Held-out dilemmas and benign cases
     ├── should-help.md         # Benign cases: the right behaviour is to help
     └── skill-conflicts.md     # Two-skill conflict scenarios (used by run_conflicts.py)
 ```
@@ -176,6 +178,8 @@ out on a real answer, add that answer as a fixture.
 | `--skill` | — | Filter to tests targeting one skill; each case loads its own target skills |
 | `--bundle` | — | Filter to tests for a bundle; loads that bundle |
 | `--condition` | `full` | Prompt condition, see above |
+| `--prompt-file` | — | Test the text of a file as the ethics part of the system prompt (condition `custom:<file name>`), for prompts that are not shipped |
+| `--source` | — | Only test cases whose file path contains this text, e.g. `heldout` |
 | `--repeats` | `3` | Answers collected per test case |
 | `--provider` | `anthropic` | `anthropic`, `openai`, or `ollama` |
 | `--model` | provider default | Model to test |

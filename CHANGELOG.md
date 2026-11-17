@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 20 held-out `baseline-safe` cases (`evals/adversarial/baseline-safe-heldout.md`: 10 adversarial; `evals/scenarios/heldout.md`: 4 dilemmas, 6 benign), written without sight of the runtime prompts. They are for checking a revised prompt on cases it was not written against and must not be used to tune wording.
+- `evals/run.py`: `--prompt-file` tests any text file as the ethics part of the system prompt (condition `custom:<file name>`), and `--source` restricts a run to case files whose path contains a text. `evals/compare.py`: `--source` / `--exclude-source` report such groups separately.
+- `evals/baselines/2026-11-17-runtime-v2/`: second measurement of the compact runtime format, with the tested prompt texts.
 - `evals/run.py`: `--condition` selects what goes into the system prompt (`none`, `placebo`, `full`, `rules`, `runtime`, `runtime-lean`), so the effect of the skills can be separated from the effect of a long prompt and the prompt sizes can be compared. `--repeats` (default 3) collects several answers per case. `--judge-provider` and `--judge-base-url` allow a judge on a different endpoint than the model under test. Also `--temperature`, `--judge-max-tokens`, `--rubric`, `--workers`.
 - Checklist judging (`evals/runner/checklist.py`): test cases carry `**Must:**` / `**Must not:**` yes/no questions about what an answer does. The judge answers each from the text, with a quote as evidence, without being told the wanted answer or the condition. This is now the primary measure; the 1-5 rubric is secondary (`--rubric`).
 - Checklists for all 35 runnable cases in `evals/scenarios/multi-stakeholder.md` and `evals/adversarial/cross-domain-attacks.md`.
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `evals/requirements.txt`.
 
 ### Changed
+- `skills/{general-ethics,epistemic-humility,human-oversight}/RUNTIME.md` revised (about 380–450 words each): a three-part answer shape for requests with a harmful part, room for dilemmas, one worked example, and no "Just answer." closing line. On Nemotron 3 Nano 30B over 80 cases the revision raised the checklist pass rate over the first format from 19% to 31% (+12 points, 95% interval 2 to 23) and kept harmful output at 12% against 31% for the bare model. It is still below the full bundle (39%) and not shown to be above the bare model (24%; +7, -3 to 17), and showed no pass-rate gain on the 20 held-out cases, so it stays experimental. A single-answer run on Qwen 3.8 27B points the same way (+20 over the bare model, interval 0 to 40) but lost a fifth of its answers to the token limit.
 - `evals/run.py` builds its system prompt with `compose_system_prompt()`, so the evaluated prompt is the one integrators load. Previously it concatenated the texts itself, without the `## Ethical Framework` header.
 - A truncated answer (token budget exhausted) is recorded as `TRUNCATED` with its text and is not judged. Model and judge errors are recorded as `ERROR` and never turned into scores.
 - Eval result JSON has a new shape: each case holds a list of `samples` with outcome, finish reason, checklist answers and evidence. `evals/compare.py` still reads the 2026-11-15 pilot files.

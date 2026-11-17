@@ -81,7 +81,7 @@ def test_compose_system_prompt_keeps_role_first_and_rejects_both_selectors():
 def test_runtime_files_are_short_and_do_not_ask_to_be_cited():
     for path in (ROOT / "skills").glob("*/RUNTIME.md"):
         words = len(path.read_text().split())
-        assert 100 <= words <= 300, f"{path}: {words} words"
+        assert 100 <= words <= 450, f"{path}: {words} words"
 
 
 def test_version_badge_matches_version_json():

@@ -26,7 +26,7 @@ When working on this project:
 | `skills/*/TEST_CASES.md` | Test cases for skill validation | Contributors + maintainers | Used in `evals/` to validate behavior |
 | `skills/*/MISUSE.md` | Known limitations and misuse risks | Contributors + maintainers | Honest about what the skill can't do |
 | `skills/*/NARRATIVES.md` | Reasoning traces through hard cases | Contributors + maintainers | Fictional vignettes showing *why* — not just *what* — the skill requires; teaches generalisation |
-| `skills/*/RUNTIME.md` | Compact runtime version of a skill (optional, experimental) | Contributors + maintainers | 150–250 words of plain do/don't instructions; loaded with `mode="runtime"`. Did not beat the full bundle in the first measurement, so do not add one to further skills until a revised format has. `SKILL.md` stays the source |
+| `skills/*/RUNTIME.md` | Compact runtime version of a skill (optional, experimental) | Contributors + maintainers | 300–450 words: plain do/don't instructions, a three-part answer shape and one worked example; loaded with `mode="runtime"`. Still below the full bundle after one revision, so do not add one to further skills until a format has passed the comparison. `SKILL.md` stays the source |
 | `tests/` | Offline consistency checks | Contributors + maintainers | `python -m pytest tests` — run before every PR; calls no model |
 | `agents/*.md` | Framework-agnostic reviewer agents | Contributors + maintainers | Plain markdown system prompts — work with any LLM |
 | `.claude/agents/*.md` | Claude Code subagent definitions | Contributors + maintainers | Reformatted for Claude Code tool access — Claude Code only |
@@ -172,6 +172,7 @@ python evals/compare.py evals/results/none.json evals/results/full.json
 ### Use the Evaluation Framework
 
 - **Checklists**: every runnable case in `evals/scenarios/` and `evals/adversarial/` needs `**Must:**` / `**Must not:**` lines (see `evals/README.md`); `tests/` enforces this
+- **Held-out cases** (`evals/adversarial/baseline-safe-heldout.md`, `evals/scenarios/heldout.md`): run them, but never revise skill or runtime wording from their individual failures
 - **Benign cases** (`evals/scenarios/should-help.md`): Does the skill make the model refuse or hedge where it should help?
 - **Scenario-based tests** (`evals/scenarios/`): Does the skill behave as documented?
 - **Adversarial tests** (`evals/adversarial/`): Can the skill be bypassed or misused?
@@ -332,8 +333,8 @@ In Claude Code, you can target a specific model for a subagent by passing `model
 | One full `SKILL.md` | ~1,500–2,500 |
 | One `NARRATIVES.md` (3 vignettes) | ~700–1,000 |
 | One skill, Behavioral Rules only | ~300–500 |
-| One skill, `RUNTIME.md` (`mode="runtime"`) | ~300–350 |
-| `baseline-safe`, `mode="runtime"`, `include_principles=False` | ~1,000 |
+| One skill, `RUNTIME.md` (`mode="runtime"`) | ~500–600 |
+| `baseline-safe`, `mode="runtime"`, `include_principles=False` | ~1,700 |
 | `baseline-safe` bundle (full) | ~10,000–11,000 |
 | `baseline-safe` bundle (`rules_only`) | ~5,000–6,000 |
 | `child-safe` bundle (full, 5 skills) | ~14,000–17,000 |

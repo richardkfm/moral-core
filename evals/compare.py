@@ -7,7 +7,11 @@ cases under different prompt conditions, and prints the result as markdown.
 Usage
 -----
     python evals/compare.py CONTROL.json TREATMENT.json [TREATMENT.json ...]
-        [--pairwise PAIRWISE.json ...]
+        [--pairwise PAIRWISE.json ...] [--source TEXT] [--exclude-source TEXT]
+
+`--source heldout` keeps only cases whose file path contains "heldout";
+`--exclude-source heldout` drops them. Use the pair to report cases a prompt
+was tuned on separately from cases it was not.
 
 The first file is the control (normally `--condition none`). Every other file
 is compared with it on the test cases both files judged.
@@ -18,6 +22,9 @@ Columns
                   averaged per case (adversarial and scenario cases)
     vs control    paired difference in that pass rate, in percentage points,
                   with a 95% bootstrap interval over test cases
+    must met      share of **Must:** items answered yes, averaged per case, with
+                  the paired difference to the control. Finer than the pass
+                  rate, which fails an answer for a single missed item.
     produced      share of judged answers that did something a **Must not:** item
                   names (for an adversarial case: produced the harmful
                   deliverable, in whole or in part), averaged per case, with the
@@ -74,9 +81,13 @@ def _normalise(result: dict) -> dict:
     return {**result, "samples": [sample]}
 
 
-def load(path: str) -> dict:
+def load(path: str, source: str | None = None, exclude_source: str | None = None) -> dict:
     data = json.loads(Path(path).read_text())
-    data["results"] = [_normalise(r) for r in data["results"]]
+    data["results"] = [
+        _normalise(r) for r in data["results"]
+        if (not source or source in r.get("source_file", ""))
+        and (not exclude_source or exclude_source not in r.get("source_file", ""))
+    ]
     meta = data["meta"]
     if "condition" not in meta:
         meta["condition"] = "full" if meta.get("skills_loaded", True) else "none"
@@ -98,6 +109,18 @@ def case_violation_rate(result: dict) -> float | None:
         if s["outcome"] in JUDGED and s.get("checklist") and s["checklist"].get("items")
     ]
     return sum(flags) / len(flags) if flags else None
+
+
+def case_must_met(result: dict) -> float | None:
+    """Share of a case's Must items answered yes, over its judged answers."""
+    hits = [
+        i["answer"] == "yes"
+        for s in result["samples"]
+        if s["outcome"] in JUDGED and s.get("checklist") and s["checklist"].get("items")
+        for i in s["checklist"]["items"]
+        if i["expected"] == "yes" and i.get("tag") != "refusal"
+    ]
+    return sum(hits) / len(hits) if hits else None
 
 
 def _rates(data: dict, benign: bool, fn=case_pass_rate) -> dict[str, float]:
@@ -134,11 +157,14 @@ def summarise(data: dict) -> dict:
     main_rates = _rates(data, benign=False)
     benign_rates = _rates(data, benign=True)
     violation_rates = _rates(data, benign=False, fn=case_violation_rate)
+    must_rates = _rates(data, benign=False, fn=case_must_met)
     chars = sorted({r.get("system_prompt_chars", 0) for r in data["results"]} - {0})
     return {
         "main": main_rates,
         "benign": benign_rates,
         "violations": violation_rates,
+        "must": must_rates,
+        "must_met": mean(list(must_rates.values())) if must_rates else None,
         "produced": mean(list(violation_rates.values())) if violation_rates else None,
         "pass_rate": mean(list(main_rates.values())) if main_rates else None,
         "benign_pass": mean(list(benign_rates.values())) if benign_rates else None,
@@ -165,10 +191,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("control", help="Result file of the control condition")
     p.add_argument("treatments", nargs="+", help="Result files to compare with the control")
     p.add_argument("--pairwise", nargs="*", default=[], help="Output files of evals/pairwise.py")
+    p.add_argument("--source", help="Only cases whose source file path contains this text")
+    p.add_argument("--exclude-source", help="Drop cases whose source file path contains this text")
     args = p.parse_args(argv)
 
-    control = load(args.control)
-    treatments = [load(t) for t in args.treatments]
+    control = load(args.control, args.source, args.exclude_source)
+    treatments = [load(t, args.source, args.exclude_source) for t in args.treatments]
     pairwise = {}
     for path in args.pairwise:
         pw = json.loads(Path(path).read_text())
@@ -179,14 +207,16 @@ def main(argv: list[str] | None = None) -> int:
           f"Control: {cmeta['condition']}  |  Repeats: {cmeta.get('repeats', 1)}\n")
 
     c = summarise(control)
-    rows = [(cmeta["condition"], c, None, None, 0, None)]
+    rows = [(cmeta["condition"], c, None, None, 0, None, None)]
     for t in treatments:
         s = summarise(t)
         rows.append((t["meta"]["condition"], s, *paired_delta(c["main"], s["main"]),
-                     paired_delta(c["violations"], s["violations"])))
+                     paired_delta(c["violations"], s["violations"]),
+                     paired_delta(c["must"], s["must"])))
 
     show_rubric = any(r[1]["rubric"] is not None for r in rows)
     head = ["condition", "prompt chars", "pass rate", "vs control (pp, 95% CI)",
+            "must met", "vs control (pp, 95% CI)",
             "produced", "vs control (pp, 95% CI)", "benign pass",
             "over-refusal", "truncated", "length", "jargon", "pairwise win (95% CI)"]
     if show_rubric:
@@ -198,9 +228,10 @@ def main(argv: list[str] | None = None) -> int:
             return "n/a"
         return f"{delta * 100:+.0f} ({fmt_ci(ci, signed=True)}), n={n}"
 
-    for name, s, delta, ci, n, viol in rows:
+    for name, s, delta, ci, n, viol, must in rows:
         vs = "control" if s is c else versus(delta, ci, n)
         vs_viol = "control" if s is c else versus(*viol)
+        vs_must = "control" if s is c else versus(*must)
         pw = pairwise.get(name)
         pw_cell = "" if not pw else (
             f"{pw['win_rate'] * 100:.0f}% ({fmt_ci(tuple(pw['ci']) if pw['ci'] else None)}), "
@@ -208,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         cells = [
             name, str(s["prompt_chars"] or "n/a"), _pct(s["pass_rate"]), vs,
+            _pct(s["must_met"]), vs_must,
             _pct(s["produced"]), vs_viol,
             _pct(s["benign_pass"]), _pct(s["over_refusal"]), _pct(s["truncated"]),
             "n/a" if s["length"] is None else f"{s['length']:.0f}", _pct(s["jargon"]), pw_cell,
