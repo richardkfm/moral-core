@@ -11,6 +11,9 @@ compare the result files (see evals/compare.py and evals/pairwise.py):
     placebo       neutral reference text as long as the full bundle
     full          PRINCIPLES.md + complete SKILL.md files (the default)
     rules         PRINCIPLES.md + each skill's Behavioral Rules section
+    principles    PRINCIPLES.md alone, no skill text
+    full-lean     the full skills without PRINCIPLES.md
+    rules-lean    the Behavioral Rules without PRINCIPLES.md
     runtime       PRINCIPLES.md + each skill's RUNTIME.md
     runtime-lean  each skill's RUNTIME.md only
     custom        the text of --prompt-file, to try a prompt that is not shipped
@@ -91,8 +94,11 @@ NO_SKILLS_PROMPT = ROLE
 CONDITIONS = {
     "none":         None,
     "placebo":      None,
+    "principles":   None,   # PRINCIPLES.md alone
     "full":         ("full", True),
+    "full-lean":    ("full", False),
     "rules":        ("rules", True),
+    "rules-lean":   ("rules", False),
     "runtime":      ("runtime", True),
     "runtime-lean": ("runtime", False),
     "custom":       None,   # text of --prompt-file
@@ -145,6 +151,9 @@ def system_prompt_for_case(case: TestCase, bundle: str | None, condition: str = 
         selection = {"skills": list(case.target_skills)}
     else:
         selection = {}  # PRINCIPLES.md only
+
+    if condition == "principles":
+        return compose_system_prompt(ROLE)
 
     if condition == "placebo":
         return placebo_prompt(len(compose_system_prompt(ROLE, **selection)))

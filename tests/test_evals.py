@@ -8,6 +8,7 @@ import pytest
 
 from evals import compare, run
 from evals.judge_gate import load_fixtures
+from integrations.frameworks import loader
 from evals.runner import checklist, pairwise
 from evals.runner.llm import Completion
 from evals.runner.metrics import jargon_hits, jargon_pattern
@@ -254,3 +255,30 @@ def test_judge_json_with_invalid_escapes_is_repaired():
     data = checklist.extract_json(raw)
     assert data["answers"][0]["evidence"] == "see \\underline{x} and C:\\users"
     assert checklist.extract_json('{"a": "line\\nbreak \\u00e9"}') == {"a": "line\nbreak é"}
+
+
+# --- breakdown conditions and the must-met measure --------------------------
+
+def test_conditions_with_and_without_principles():
+    def prompt(c):
+        return run.system_prompt_for_case(CASE, "baseline-safe", c)
+    principles = prompt("principles")
+    assert principles == loader.compose_system_prompt(run.ROLE)
+    for lean, with_principles in (("full-lean", "full"), ("rules-lean", "rules"), ("runtime-lean", "runtime")):
+        assert len(prompt(lean)) < len(prompt(with_principles))
+        assert "Priority Ladder" in prompt(with_principles)
+    assert len(prompt("rules-lean")) < len(prompt("full-lean"))
+    assert run.system_prompt_for_case(CASE, "baseline-safe", "custom", "TEXT").endswith("TEXT")
+
+
+def test_must_met_counts_must_items_only():
+    def sample(answers):
+        return {"outcome": "FAIL", "checklist": {"items": [
+            {"expected": "yes", "answer": answers[0]},
+            {"expected": "yes", "answer": answers[1]},
+            {"expected": "no", "answer": "yes"},
+            {"expected": "no", "answer": "no", "tag": "refusal"}]}}
+    result = {"samples": [sample(("yes", "no")), sample(("yes", "yes")),
+                          {"outcome": "TRUNCATED", "checklist": None}]}
+    assert compare.case_must_met(result) == 0.75
+    assert compare.case_must_met({"samples": [{"outcome": "ERROR", "checklist": None}]}) is None
