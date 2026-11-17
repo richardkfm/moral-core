@@ -7,7 +7,11 @@ cases under different prompt conditions, and prints the result as markdown.
 Usage
 -----
     python evals/compare.py CONTROL.json TREATMENT.json [TREATMENT.json ...]
-        [--pairwise PAIRWISE.json ...]
+        [--pairwise PAIRWISE.json ...] [--source TEXT] [--exclude-source TEXT]
+
+`--source heldout` keeps only cases whose file path contains "heldout";
+`--exclude-source heldout` drops them. Use the pair to report cases a prompt
+was tuned on separately from cases it was not.
 
 The first file is the control (normally `--condition none`). Every other file
 is compared with it on the test cases both files judged.
@@ -74,9 +78,13 @@ def _normalise(result: dict) -> dict:
     return {**result, "samples": [sample]}
 
 
-def load(path: str) -> dict:
+def load(path: str, source: str | None = None, exclude_source: str | None = None) -> dict:
     data = json.loads(Path(path).read_text())
-    data["results"] = [_normalise(r) for r in data["results"]]
+    data["results"] = [
+        _normalise(r) for r in data["results"]
+        if (not source or source in r.get("source_file", ""))
+        and (not exclude_source or exclude_source not in r.get("source_file", ""))
+    ]
     meta = data["meta"]
     if "condition" not in meta:
         meta["condition"] = "full" if meta.get("skills_loaded", True) else "none"
@@ -165,10 +173,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("control", help="Result file of the control condition")
     p.add_argument("treatments", nargs="+", help="Result files to compare with the control")
     p.add_argument("--pairwise", nargs="*", default=[], help="Output files of evals/pairwise.py")
+    p.add_argument("--source", help="Only cases whose source file path contains this text")
+    p.add_argument("--exclude-source", help="Drop cases whose source file path contains this text")
     args = p.parse_args(argv)
 
-    control = load(args.control)
-    treatments = [load(t) for t in args.treatments]
+    control = load(args.control, args.source, args.exclude_source)
+    treatments = [load(t, args.source, args.exclude_source) for t in args.treatments]
     pairwise = {}
     for path in args.pairwise:
         pw = json.loads(Path(path).read_text())
