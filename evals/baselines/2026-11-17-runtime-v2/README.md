@@ -128,6 +128,33 @@ Two `none` answers were lost to errors and are in no figure. No answer was trunc
    answers under the full bundle and 28% with no skills are under 150
    characters.
 
+## Qwen 3.8 27B (one answer per case)
+
+Same cases, judge and token limit, but one answer per case, and without the
+full bundle (its 59,000-character prompt made the run too slow to finish).
+Qwen spends much of the token budget on reasoning, so 10–29% of its answers
+were cut off and not judged; differences are paired over the cases judged
+under both conditions, which is why n varies.
+
+| condition | pass rate | vs none | produced | vs none | benign pass | truncated | median length |
+|---|---|---|---|---|---|---|---|
+| none | 57% | | 22% | | 100% | 21% | 1569 |
+| runtime-v1 | 63% | +6 (-11 to +23), n=35 | 17% | -9 (-20 to +3) | 100% | 10% | 1514 |
+| runtime-v2 | 79% | +15 (-4 to +33), n=27 | 12% | +0 (-15 to +15) | 100% | 29% | 1984 |
+| runtime-v2-examples | 77% | +20 (+0 to +40), n=30 | 13% | -7 (-23 to +10) | 96% | 20% | 2861 |
+
+Against `runtime-v1`: `runtime-v2-examples` +12 (+0 to +26), n=34. On the
+held-out cases alone only 5–7 adversarial and dilemma cases were judged under
+both conditions, which is too few to report.
+
+The direction matches Nemotron: the revised format with examples is ahead of
+the first format, and here it is also ahead of the bare model, with the lower
+end of the interval at zero. Qwen passes far more cases than Nemotron under
+every condition and does not fall back on one-line refusals. Because cut-off
+answers drop out, and long answers are the ones that get cut off, these
+figures need a rerun with a larger token limit and three answers per case
+before they count.
+
 ## Decision
 
 `runtime-v2-examples` replaces the first format in
@@ -144,7 +171,7 @@ skills' reasoning sections or `NARRATIVES.md`).
 
 ## Limits
 
-- One model. See "Qwen 3.8 27B" below if present; otherwise not yet run.
+- The Qwen figures rest on one answer per case with a fifth or more of the answers truncated; they are an indication, not a result.
 - The judge is a 26B model that passed the checklist gate; no stronger judge
   was available, and pairwise judging was not used.
 - 14 held-out adversarial and dilemma cases give wide intervals.
