@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.9.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.10.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 </div>
@@ -166,8 +166,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) 
 - 8 framework-agnostic reviewer agents for ethical validation and design
 - 8 Claude Code subagent equivalents for integration with Claude Code workflows
 - 11 pre-built policy bundles for common deployment contexts (including new `financial-services`, `data-platform`, and `labor-platform` bundles)
-- Evaluation framework that compares prompt conditions (no skills, placebo, full, rules, runtime) with checklist judging, a judge gate, benign cases for over-refusal, and repeat runs
-- `RUNTIME.md`, an experimental compact version of the three `baseline-safe` skills. In the first measurement it did not beat the full bundle and is not the recommended mode
+- Evaluation framework that compares prompt conditions (no skills, placebo, full, rules, runtime, or any prompt file) with checklist judging, a judge gate, benign cases for over-refusal, and repeat runs
+- `RUNTIME.md`, an experimental compact version of the three `baseline-safe` skills. Revised once after measurement; it stops harmful output about as well as the full bundle but still scores below it overall and is not the recommended mode
 - Offline consistency checks in `tests/`, run on every pull request
 - Integration guides for LLMs, agents, robotics, education, content moderation, and enterprise
 - Framework-specific guides for LangChain, Dify, and CrewAI with shared Python loader utility
