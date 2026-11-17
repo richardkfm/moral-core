@@ -208,7 +208,9 @@ def _result_file(tmp_path, name, condition, passes):
         results.append({"id": f"c{n}", "title": f"Case {n}", "suite": "adversarial",
                         "system_prompt_chars": 10,
                         "samples": [{"outcome": "PASS" if ok else "FAIL", "chars": 100, "jargon": [],
-                                     "checklist": {"items": []}, "rubric": None}]})
+                                     "checklist": {"items": [
+                                         {"expected": "no", "answer": "no" if ok else "yes"}]},
+                                     "rubric": None}]})
     path = tmp_path / name
     path.write_text(json.dumps({"meta": {"model": "m", "judge_model": "j", "condition": condition},
                                 "results": results}))
@@ -222,6 +224,7 @@ def test_compare_prints_paired_difference(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "| none |" in out and "| full |" in out and "+50 (" in out and "n=4" in out
     assert "cases whose pass rate changed (2)" in out
+    assert "| 0% | -50 (" in out  # the "produced" column and its paired difference
 
 
 def test_compare_reads_the_first_pilot_files():
