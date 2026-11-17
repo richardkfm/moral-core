@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `evals/run.py`: `--condition` selects what goes into the system prompt (`none`, `placebo`, `full`, `rules`, `runtime`, `runtime-lean`), so the effect of the skills can be separated from the effect of a long prompt and the prompt sizes can be compared. `--repeats` (default 3) collects several answers per case. `--judge-provider` and `--judge-base-url` allow a judge on a different endpoint than the model under test. Also `--temperature`, `--judge-max-tokens`, `--rubric`, `--workers`.
+- Checklist judging (`evals/runner/checklist.py`): test cases carry `**Must:**` / `**Must not:**` yes/no questions about what an answer does. The judge answers each from the text, with a quote as evidence, without being told the wanted answer or the condition. This is now the primary measure; the 1-5 rubric is secondary (`--rubric`).
+- Checklists for all 35 runnable cases in `evals/scenarios/multi-stakeholder.md` and `evals/adversarial/cross-domain-attacks.md`.
+- `evals/adversarial/baseline-safe-hard.md`: 20 harder adversarial cases for the `baseline-safe` bundle (authority framing, removing human review, false certainty, sycophancy, third-party deception, "wrap it in ethical language", agents bypassing their own oversight, urgency).
+- `evals/scenarios/should-help.md`: 20 benign cases where the right behaviour is to help, to measure over-refusal, over-hedging and needless escalation. Benign cases automatically get a refusal question.
+- `evals/judge_gate.py` and `evals/judge_fixtures/fixtures.json`: answers with a known verdict that a judge model must get right before its results are used, including the pilot answer that a rubric judge wrongly passed. One gate per judging method.
+- `evals/pairwise.py`: blinded pairwise comparison of two runs, each pair judged in both orders; a preference counts only if both orders agree.
+- `evals/compare.py` now compares any number of conditions with the control and reports the paired difference in pass rate with a 95% bootstrap interval, benign pass rate, over-refusal, truncation, answer length and framework jargon.
+- `skills/{general-ethics,epistemic-humility,human-oversight}/RUNTIME.md`: compact, behaviour-first versions of the three `baseline-safe` skills (about 240 words each) for small models. `SKILL.md` remains the auditable source.
+- `integrations/frameworks/loader.py`: `mode="full" | "rules" | "runtime"` and `include_principles` on `load_skill`, `load_bundle` and `compose_system_prompt`; new `bundle_skills()`. `rules_only=True` keeps working.
+- `tests/` and `.github/workflows/validate.yml`: offline checks on every pull request (manifest against skill directories and bundle map, required skill files, loader modes, every eval heading parses into a case, every runnable case has a well-formed checklist, judge fixtures). No model calls.
+- `evals/requirements.txt`.
+
+### Changed
+- `evals/run.py` builds its system prompt with `compose_system_prompt()`, so the evaluated prompt is the one integrators load. Previously it concatenated the texts itself, without the `## Ethical Framework` header.
+- A truncated answer (token budget exhausted) is recorded as `TRUNCATED` with its text and is not judged. Model and judge errors are recorded as `ERROR` and never turned into scores.
+- Eval result JSON has a new shape: each case holds a list of `samples` with outcome, finish reason, checklist answers and evidence. `evals/compare.py` still reads the 2026-11-15 pilot files.
+- The rubric judge is no longer told that the system is "loaded with ethical skill modules", and a judge reply that lacks a score is an error instead of a score of 1.
+- `README.md`: the claim "Tested and evaluated against scenario-based rubrics" now says what has actually been run.
+
+### Fixed
+- `evals/run.py`: every run without `--bundle` (including `--skill`) recorded an error for each case with target skills, because it imported a `load_skills` function that does not exist. Errors were then written as scores of 1.
+- `integrations/frameworks/loader.py`: `rules_only=True` only matched `## 6. Behavioral Rules` and silently returned the **whole** `SKILL.md` for the eight skills that number the section 5 (abuse-prevention, data-privacy-surveillance, digital-ethics, epistemic-humility, financial-ethics, human-oversight, labor-rights, research-ethics). A `rules_only` `baseline-safe` bundle therefore contained two of its three skills in full. The section is now matched by name, and a missing section raises instead of falling back.
+- `skills-manifest.yaml`: the per-skill `bundles:` back-references were out of date for 13 skills (for example `democratic-legitimacy` listed none but is in `civic-governance`). They now match the bundle map, and a test keeps them in sync.
+- `evals/runner/parser.py`: the last field of the last case in a file no longer swallows the text of the section that follows it.
+
+## [1.8.0] - 2026-11-15
+
+### Added
 - `evals/run.py`: `--no-skills` flag for control runs (same test cases, bare system prompt), so the effect of loading skills can be measured against the model's own behaviour; `--limit` to run only the first N cases; `--max-tokens` to set the response budget for reasoning models.
 - `evals/compare.py`: paired comparison of two result files (e.g. no skills vs. skills) as a markdown table.
 - `evals/baselines/2026-11-15-nemotron-3-nano-30b-baseline-safe.md` plus the two raw result files: first recorded pilot of the `baseline-safe` bundle on an open-weight model (Nemotron 3 Nano 30B, judged by Gemma 4 26B), including a human spot-check of the judge and its limits.
@@ -19,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `evals/runner/parser.py`: the field pattern expected `**Label**:` but every scenario and adversarial file uses `**Label:**`, so `evals/run.py` found **zero** test cases and could not run. It now accepts both forms and loads all 43 cases.
+
+## [1.7.2 – 1.7.5] - 2026-06
+
+Entries from these four patch releases were recorded without version headings.
 
 ### Fixed
 - `skills/justice-fairness/SKILL.md`, `skills/democratic-legitimacy/SKILL.md`: completed both skills to the shared 15-section template. These were the only two skills (of 23) missing **Edge Cases**, **Robotics Notes**, and **Developer Notes** — a real gap for a library that targets robots, since neither skill previously gave any embodied-deployment guidance. Added all three sections to each (allocation-robot guidance for justice-fairness; automated-governance/contestability guidance for democratic-legitimacy). Also moved each skill's numbered `## 12. Philosophical Grounding` section to a trailing Appendix (so the standard §12–§15 sections occupy their normal slots) and fixed its broken relative link to `PHILOSOPHY.md` (`../../../../` → `../../`). Same Philosophical-Grounding defect class as fixed for general-ethics (1.7.1), environment (1.7.3), and epistemic-humility (1.7.4).

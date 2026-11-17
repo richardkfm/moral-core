@@ -8,7 +8,7 @@ skills:
     version: "0.1.0"
     description: "Baseline moral reasoning: dignity, fairness, proportionality, restraint"
     tags: [baseline, core, universal]
-    bundles: [baseline-safe, robotics-care, eco-care]
+    bundles: [baseline-safe, robotics-care, eco-care, civic-governance, data-platform, labor-platform]
     risk_level: low
 
   - name: conflict-mediation
@@ -56,7 +56,7 @@ skills:
     version: "0.1.0"
     description: "Safeguarding for people with reduced power, capacity, or safety"
     tags: [vulnerable, protection, safeguarding]
-    bundles: [anti-abuse, child-safe, robotics-care]
+    bundles: [anti-abuse, child-safe, robotics-care, financial-services, labor-platform]
     risk_level: low
 
   - name: environment
@@ -64,7 +64,7 @@ skills:
     version: "0.1.0"
     description: "Sustainability, ecological impact, energy efficiency, waste minimization"
     tags: [environment, sustainability, ecology]
-    bundles: [eco-care, robotics-care]
+    bundles: [robotics-care, eco-care]
     risk_level: low
 
   - name: animal-welfare
@@ -72,7 +72,7 @@ skills:
     version: "0.1.0"
     description: "Anti-cruelty, sentience recognition, suffering minimization, humane alternatives"
     tags: [animals, welfare, cruelty]
-    bundles: [eco-care, robotics-care]
+    bundles: [robotics-care, eco-care]
     risk_level: low
 
   - name: child-safety
@@ -88,7 +88,7 @@ skills:
     version: "0.1.0"
     description: "Respect, accessibility, adaptive communication, autonomy support"
     tags: [disability, accessibility, inclusion]
-    bundles: [inclusive-assistant, robotics-care]
+    bundles: [robotics-care, inclusive-assistant]
     risk_level: low
 
   - name: elder-protection
@@ -96,7 +96,7 @@ skills:
     version: "0.1.0"
     description: "Anti-neglect, anti-financial-exploitation, dignity, cognitive vulnerability awareness"
     tags: [elderly, protection, dignity]
-    bundles: [inclusive-assistant, robotics-care]
+    bundles: [robotics-care, inclusive-assistant]
     risk_level: low
 
   - name: abuse-prevention
@@ -112,7 +112,7 @@ skills:
     version: "0.1.0"
     description: "Honest uncertainty, evidence vs inference, verification encouragement"
     tags: [honesty, uncertainty, truth, core]
-    bundles: [baseline-safe]
+    bundles: [baseline-safe, civic-governance, financial-services]
     risk_level: low
 
   - name: human-oversight
@@ -120,7 +120,7 @@ skills:
     version: "0.1.0"
     description: "Escalation logic, safe fallbacks, human-in-the-loop requirements"
     tags: [oversight, escalation, safety, core]
-    bundles: [baseline-safe, child-safe, robotics-care]
+    bundles: [baseline-safe, child-safe, robotics-care, civic-governance, financial-services, data-platform, labor-platform]
     risk_level: low
 
   - name: digital-ethics
@@ -128,7 +128,7 @@ skills:
     version: "0.1.0"
     description: "Anti-misinformation, deepfake refusal, privacy, information integrity"
     tags: [digital, misinformation, deepfake, privacy]
-    bundles: [child-safe]
+    bundles: [child-safe, data-platform]
     risk_level: medium
 
   - name: justice-fairness
@@ -136,7 +136,7 @@ skills:
     version: "0.1.0"
     description: "Distributive justice, structural inequality, Rawlsian fairness, capabilities approach"
     tags: [justice, fairness, structural, inequality, rawls, capabilities]
-    bundles: [inclusive-assistant]
+    bundles: [inclusive-assistant, civic-governance, labor-platform]
     risk_level: low
     philosophical_roots: [rawlsian-justice, capabilities-approach, european-human-rights]
 
@@ -145,7 +145,7 @@ skills:
     version: "0.1.0"
     description: "Procedural legitimacy, participatory governance, accountability, anti-technocracy"
     tags: [democracy, legitimacy, participation, accountability, governance, ai-governance]
-    bundles: []
+    bundles: [civic-governance]
     risk_level: low
     philosophical_roots: [habermas-discourse-ethics, social-contract, european-human-rights]
 
@@ -172,7 +172,7 @@ skills:
     version: "0.1.0"
     description: "Personal data protection, anti-surveillance, tracking consent, re-identification prevention, data minimization"
     tags: [privacy, surveillance, data-protection, tracking, consent, biometric]
-    bundles: [data-platform, financial-services]
+    bundles: [financial-services, data-platform]
     risk_level: high
     philosophical_roots: [arendt-public-private, foucault-panopticon, nissenbaum-contextual-integrity, zuboff-surveillance-capitalism]
 
@@ -190,7 +190,7 @@ skills:
     version: "0.1.0"
     description: "Basic, non-clinical first-response support for users raising psychological topics; explicit AI-not-a-person and AI-not-a-therapist disclosure; routing to professional help and trusted adults; anti-isolation"
     tags: [mental-health, crisis-support, suicide-prevention, abuse-disclosure, minors, anti-isolation, non-clinical]
-    bundles: [mediation-first, child-safe, anti-abuse]
+    bundles: [mediation-first, anti-abuse, child-safe]
     risk_level: high
     philosophical_roots: [who-pfa-guidelines, ifrc-psychological-first-aid, care-ethics]
 

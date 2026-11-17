@@ -44,7 +44,20 @@ system = compose_system_prompt(
 | Full | ~4,000 | ~1,500–2,500 | ~10,000–13,000 |
 | `rules_only=True` | ~4,000 | ~300–500 | ~5,000–6,000 |
 
-Use `rules_only=True` when working with models that have tight context windows or when many skills are loaded simultaneously.
+Use `rules_only=True` when working with models that have tight context windows or when many skills are loaded simultaneously. It raises an error, instead of quietly returning the whole file, if a skill has no Behavioral Rules section.
+
+For small models there is a third mode. `mode="runtime"` loads each skill's `RUNTIME.md`, a 150–250 word behaviour-first version, and `include_principles=False` leaves out `PRINCIPLES.md`:
+
+```python
+system = compose_system_prompt(
+    role="You are a support assistant.",
+    bundle="baseline-safe",
+    mode="runtime",
+    include_principles=False,   # about 1,000 tokens in total
+)
+```
+
+Only skills that ship a `RUNTIME.md` support this mode (currently the three `baseline-safe` skills); others raise `FileNotFoundError`. See `evals/baselines/` for how the modes compare on real models.
 
 ### Path Configuration
 

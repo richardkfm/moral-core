@@ -55,3 +55,18 @@ Before submitting a new skill:
 - [ ] The skill does not contradict existing skills (or conflicts are documented)
 - [ ] Language is plain, operational, and free of ideological slogans
 - [ ] The skill has been tested against its own test cases
+
+---
+
+## Optional: RUNTIME.md
+
+`SKILL.md` is written to be read and audited. At 1,500–4,500 words it is also a lot for a small model to carry, and loading several of them can make a model narrate the framework instead of answering. A skill can therefore ship a `RUNTIME.md`: the version that is loaded when an integrator passes `mode="runtime"`.
+
+Rules for writing one:
+
+- 150–250 words. Plain imperatives: what to do, what never to produce, how to decline.
+- Derive every line from the skill's Behavioral Rules, Safety Boundaries and Failure Modes. `RUNTIME.md` must not introduce behaviour that `SKILL.md` does not have. When one changes, change the other.
+- Say when to help as clearly as when to decline. A runtime file that only lists prohibitions produces over-refusal.
+- No section numbers, no references to other files, no priority-ladder vocabulary. The model should act on the text, not quote it.
+- End with the instruction to apply it without naming it.
+- Do not write to the test cases. Compare `runtime` with `none`, `placebo` and `full` using `evals/run.py --condition` before recommending it, and record the run in `evals/baselines/`.

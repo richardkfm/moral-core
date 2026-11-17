@@ -1,41 +1,45 @@
 """
 moral-core automated evaluation runner
 =======================================
-Runs scenario-based and adversarial tests against a configured model,
-scores responses using an LLM-as-judge, and reports pass/fail results.
+Sends scenario, adversarial and benign test cases to a model under one
+prompt condition, judges the answers, and reports the results.
+
+To learn what the skills add, run the same cases under several conditions and
+compare the result files (see evals/compare.py and evals/pairwise.py):
+
+    none          bare system prompt, no skills
+    placebo       neutral reference text as long as the full bundle
+    full          PRINCIPLES.md + complete SKILL.md files (the default)
+    rules         PRINCIPLES.md + each skill's Behavioral Rules section
+    runtime       PRINCIPLES.md + each skill's RUNTIME.md
+    runtime-lean  each skill's RUNTIME.md only
 
 Usage
 -----
-    # Run all tests against Anthropic Claude
-    python evals/run.py --provider anthropic
-
-    # Run only adversarial tests against OpenAI
-    python evals/run.py --suite adversarial --provider openai --model gpt-4o
-
-    # Filter to tests for a single skill
-    python evals/run.py --skill general-ethics --provider anthropic
-
-    # Filter to tests for an entire bundle
+    # All cases for a bundle, three answers per case, bundle loaded
     python evals/run.py --bundle baseline-safe --provider anthropic
 
-    # Use a different judge model than the model under test
-    python evals/run.py --provider anthropic --model claude-opus-4-6 --judge-model claude-haiku-4-5-20251001
+    # The control run for the same cases
+    python evals/run.py --bundle baseline-safe --condition none \
+        --output evals/results/none.json
 
-    # Save results to a JSON file
-    python evals/run.py --output evals/results/run-2026-03-29.json
+    # Only cases that target one skill; each case loads its own target skills
+    python evals/run.py --skill general-ethics --limit 1
 
-    # Disable colour output (for CI logs)
-    python evals/run.py --no-color
-
-    # Measure what the skills add: run the same cases without any skills
-    # loaded, then with them, and compare the two result files
-    python evals/run.py --bundle baseline-safe --no-skills --output evals/results/without.json
-    python evals/run.py --bundle baseline-safe --output evals/results/with.json
-
-    # Any OpenAI-compatible endpoint (vLLM, SGLang, hosted open-weight models)
+    # Any OpenAI-compatible endpoint, with the judge on a different endpoint
     OPENAI_BASE_URL=https://example.invalid/v1 python evals/run.py \
-        --provider openai --model "Model Under Test" --judge-model "Judge Model" \
-        --max-tokens 4096
+        --provider openai --model "Model Under Test" --max-tokens 4096 \
+        --judge-provider anthropic --judge-model "Judge Model"
+
+    # Add the 1-5 rubric scores next to the checklist
+    python evals/run.py --bundle baseline-safe --rubric
+
+Judging
+-------
+A case with **Must:** / **Must not:** lines is judged by checklist: the judge
+answers each yes/no question about the answer text. A case without a checklist
+is judged on the 1-5 rubric. Check a judge model with evals/judge_gate.py
+before trusting its results.
 
 Environment variables
 ---------------------
@@ -47,8 +51,8 @@ Environment variables
 from __future__ import annotations
 
 import argparse
-import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Ensure repo root is on sys.path so we can import from integrations/
@@ -56,141 +60,91 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from evals.runner.parser import load_suite, filter_by_skill, filter_by_bundle, TestCase
-from evals.runner.judge import score, ScoreResult, _CALLERS
+from evals.runner.checklist import judge_checklist
+from evals.runner.judge import score
+from evals.runner.llm import PROVIDERS, chat
+from evals.runner.metrics import jargon_hits, jargon_pattern
+from evals.runner.parser import TestCase, filter_by_bundle, filter_by_skill, load_suite
 from evals.runner.report import (
     EvalResult,
+    Sample,
     print_header,
     print_result,
     print_summary,
     save_json,
 )
+from integrations.frameworks.loader import (
+    bundle_skills,
+    compose_system_prompt,
+    list_skills,
+)
 
 # ---------------------------------------------------------------------------
-# Skill loader  (re-uses integrations/frameworks/loader.py)
+# System prompt per condition
 # ---------------------------------------------------------------------------
 
-try:
-    from integrations.frameworks.loader import load_bundle as _load_bundle
-    from integrations.frameworks.loader import load_skill as _load_skill
-    from integrations.frameworks.loader import load_principles, list_bundles
-    _HAS_LOADER = True
-except ImportError:
-    _HAS_LOADER = False
+ROLE = "You are a helpful assistant."
+NO_SKILLS_PROMPT = ROLE
+
+# condition -> (loader mode, include PRINCIPLES.md)
+CONDITIONS = {
+    "none":         None,
+    "placebo":      None,
+    "full":         ("full", True),
+    "rules":        ("rules", True),
+    "runtime":      ("runtime", True),
+    "runtime-lean": ("runtime", False),
+}
+
+PLACEBO_PATH = Path(__file__).parent / "placebo" / "neutral.md"
 
 
-NO_SKILLS_PROMPT = "You are a helpful assistant."
+def placebo_prompt(target_chars: int) -> str:
+    """
+    A system prompt of `target_chars` characters with no ethical content.
+
+    The neutral text is repeated to reach the length of the full prompt for
+    the same skills, so a difference between `placebo` and `full` cannot be
+    put down to the prompt simply being long.
+    """
+    head = f"{ROLE}\n\n## Reference Material\n\n"
+    body = PLACEBO_PATH.read_text().strip() + "\n\n"
+    need = max(0, target_chars - len(head))
+    return head + (body * (need // len(body) + 1))[:need].rstrip()
 
 
-def _system_prompt_for_case(case: TestCase, bundle: str | None, no_skills: bool = False) -> str:
+def system_prompt_for_case(case: TestCase, bundle: str | None, condition: str = "full") -> str:
     """
     Build the system prompt for the model under test.
 
-    Priority:
-    1. If --bundle was specified, load that bundle.
-    2. If the test case has target skills, load those skills.
-    3. Fall back to PRINCIPLES.md only.
+    The skills are the bundle's if --bundle was given, otherwise the case's
+    own target skills. The text is composed by the same
+    compose_system_prompt() that integrators use, so the evaluated prompt is
+    the shipped one.
     """
-    if no_skills:
-        # Control condition: no ethical context at all, so the run measures
-        # the model's own behaviour on the same test cases.
+    if condition not in CONDITIONS:
+        raise ValueError(f"Unknown condition '{condition}'")
+    if condition == "none":
         return NO_SKILLS_PROMPT
 
-    if not _HAS_LOADER:
-        # Graceful fallback: return empty string (model has no ethical context).
-        # This is intentional for testing baseline model behaviour.
-        return "You are a helpful assistant."
-
     if bundle:
-        ethics = _load_bundle(bundle)
-        return f"You are a helpful assistant.\n\n{ethics}"
-
-    if case.target_skills:
-        try:
-            from integrations.frameworks.loader import load_skills
-            ethics = load_principles() + "\n\n---\n\n" + "\n\n---\n\n".join(
-                _load_skill(s) for s in case.target_skills
-            )
-            return f"You are a helpful assistant.\n\n{ethics}"
-        except FileNotFoundError:
-            pass  # Some skills in the test file may not exist yet
-
-    return f"You are a helpful assistant.\n\n{load_principles()}"
-
-
-# ---------------------------------------------------------------------------
-# LLM call for the model under test  (mirrors agents/runner.py)
-# ---------------------------------------------------------------------------
-
-def _run_model(system: str, prompt: str, provider: str, model: str, max_tokens: int = 1024) -> str:
-    import os
-
-    if provider == "anthropic":
-        import anthropic
-        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        resp = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text
-
-    elif provider == "openai":
-        from openai import OpenAI
-        client = OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY"),
-            base_url=os.environ.get("OPENAI_BASE_URL"),
-        )
-        # Stream the response: slow or self-hosted endpoints often sit behind a
-        # gateway that cuts off long non-streaming requests (HTTP 502/504).
-        stream = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=max_tokens,
-            stream=True,
-        )
-        parts: list[str] = []
-        finish_reason = None
-        for chunk in stream:
-            if not chunk.choices:
-                continue
-            choice = chunk.choices[0]
-            if choice.delta.content:
-                parts.append(choice.delta.content)
-            if choice.finish_reason:
-                finish_reason = choice.finish_reason
-        content = "".join(parts).strip()
-        if not content:
-            # Reasoning models spend max_tokens on hidden reasoning first; an
-            # empty answer must not be scored as if the model had said nothing.
-            raise RuntimeError(
-                f"Model returned no answer text (finish_reason={finish_reason}); "
-                "try a larger --max-tokens"
-            )
-        return content
-
-    elif provider == "ollama":
-        import requests
-        resp = requests.post(
-            "http://localhost:11434/api/chat",
-            json={
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": prompt},
-                ],
-                "stream": False,
-            },
-        )
-        resp.raise_for_status()
-        return resp.json()["message"]["content"]
-
+        selection = {"bundle": bundle}
+    elif case.target_skills:
+        known = set(list_skills())
+        missing = [s for s in case.target_skills if s not in known]
+        if missing:
+            raise ValueError(f"Case names unknown skill(s): {', '.join(missing)}")
+        selection = {"skills": list(case.target_skills)}
     else:
-        raise ValueError(f"Unknown provider: {provider}")
+        selection = {}  # PRINCIPLES.md only
+
+    if condition == "placebo":
+        return placebo_prompt(len(compose_system_prompt(ROLE, **selection)))
+
+    mode, include_principles = CONDITIONS[condition]
+    return compose_system_prompt(
+        ROLE, mode=mode, include_principles=include_principles, **selection
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -211,117 +165,155 @@ DEFAULT_JUDGE_MODELS = {
 
 
 # ---------------------------------------------------------------------------
+# One answer
+# ---------------------------------------------------------------------------
+
+def run_sample(case: TestCase, system_prompt: str, repeat: int, args, jargon_re) -> Sample:
+    """Get one answer for a case and judge it. Never raises."""
+    sample = Sample(repeat=repeat)
+    try:
+        completion = chat(
+            args.provider, args.model, system_prompt, case.prompt,
+            max_tokens=args.max_tokens, temperature=args.temperature,
+        )
+        sample.response = completion.text
+        sample.finish_reason = completion.finish_reason
+        sample.truncated = completion.truncated
+        sample.jargon = jargon_hits(completion.text, jargon_re)
+
+        if completion.truncated:
+            return sample  # kept and counted, not judged
+        if not completion.text:
+            raise RuntimeError(
+                f"Model returned no answer text (finish_reason={completion.finish_reason})"
+            )
+
+        judge = dict(provider=args.judge_provider, model=args.judge_model,
+                     base_url=args.judge_base_url)
+        if case.checklist:
+            sample.checklist = judge_checklist(
+                case.prompt, completion.text, case.checklist,
+                max_tokens=args.judge_max_tokens, **judge,
+            )
+        if args.rubric or not case.checklist:
+            sample.rubric = score(
+                prompt=case.prompt, response=completion.text,
+                expected_behavior=case.expected_behavior,
+                failure_modes=case.failure_modes,
+                max_tokens=args.judge_max_tokens, **judge,
+            )
+    except Exception as exc:
+        # One failed call must not abort the run, and must not become a score.
+        sample.error = f"{type(exc).__name__}: {exc}"
+    return sample
+
+
+def run_case(case: TestCase, args, jargon_re) -> EvalResult:
+    try:
+        system_prompt = system_prompt_for_case(case, args.bundle, args.condition)
+    except Exception as exc:
+        err = f"{type(exc).__name__}: {exc}"
+        return EvalResult(case, [Sample(repeat=r, error=err) for r in range(1, args.repeats + 1)])
+    samples = [
+        run_sample(case, system_prompt, r, args, jargon_re)
+        for r in range(1, args.repeats + 1)
+    ]
+    return EvalResult(case, samples, system_prompt_chars=len(system_prompt))
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="moral-core automated evaluation runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument(
-        "--suite",
-        default="all",
-        choices=["scenarios", "adversarial", "all"],
-        help="Which test suite to run (default: all)",
-    )
+    p.add_argument("--suite", default="all",
+                   choices=["scenarios", "adversarial", "benign", "all"],
+                   help="Which kind of test case to run (default: all)")
     p.add_argument("--skill",  help="Filter to tests targeting a specific skill")
     p.add_argument("--bundle", help="Filter to tests for skills in a bundle; also loads that bundle as system prompt")
-    p.add_argument(
-        "--provider",
-        default="anthropic",
-        choices=["anthropic", "openai", "ollama"],
-        help="LLM provider for the model under test (default: anthropic)",
-    )
-    p.add_argument("--model",       help="Model to test (uses provider default if omitted)")
-    p.add_argument("--judge-model", help="Model to use for scoring (uses cheap default if omitted)")
-    p.add_argument(
-        "--no-skills",
-        action="store_true",
-        help="Control run: send a bare system prompt with no skills or principles loaded. "
-             "--skill/--bundle still select the test cases.",
-    )
+    p.add_argument("--condition", default="full", choices=list(CONDITIONS),
+                   help="What goes into the system prompt (default: full). "
+                        "--skill/--bundle select the test cases under every condition.")
+    p.add_argument("--no-skills", action="store_true",
+                   help="Same as --condition none (kept for older commands)")
+    p.add_argument("--repeats", type=int, default=3,
+                   help="Answers to collect per test case (default: 3)")
+    p.add_argument("--provider", default="anthropic", choices=list(PROVIDERS),
+                   help="LLM provider for the model under test (default: anthropic)")
+    p.add_argument("--model", help="Model to test (uses provider default if omitted)")
+    p.add_argument("--max-tokens", type=int, default=1024,
+                   help="Response token budget for the model under test (default: 1024). "
+                        "Raise it for reasoning models, whose reasoning counts against the budget.")
+    p.add_argument("--temperature", type=float,
+                   help="Sampling temperature for the model under test (default: provider default)")
+    p.add_argument("--judge-provider", choices=list(PROVIDERS),
+                   help="Provider for the judge (default: same as --provider)")
+    p.add_argument("--judge-model", help="Model to use for judging (uses cheap default if omitted)")
+    p.add_argument("--judge-base-url", help="Endpoint for the judge, if different from the model under test")
+    p.add_argument("--judge-max-tokens", type=int, default=2048,
+                   help="Token budget for each judge reply (default: 2048)")
+    p.add_argument("--rubric", action="store_true",
+                   help="Also score every answer on the 1-5 rubric (one more judge call each)")
     p.add_argument("--limit", type=int, help="Run only the first N test cases after filtering")
-    p.add_argument(
-        "--max-tokens",
-        type=int,
-        default=1024,
-        help="Response token budget for the model under test (default: 1024). "
-             "Raise it for reasoning models, whose reasoning counts against the budget.",
-    )
-    p.add_argument("--output",      help="Path to save JSON results (optional)")
-    p.add_argument("--no-color",    action="store_true", help="Disable coloured terminal output")
-    return p.parse_args()
+    p.add_argument("--workers", type=int, default=4,
+                   help="Test cases to run in parallel (default: 4)")
+    p.add_argument("--output", help="Path to save JSON results (optional)")
+    p.add_argument("--no-color", action="store_true", help="Disable coloured terminal output")
+    args = p.parse_args(argv)
+
+    if args.no_skills:
+        args.condition = "none"
+    if args.repeats < 1:
+        p.error("--repeats must be at least 1")
+    args.model = args.model or DEFAULT_MODELS[args.provider]
+    args.judge_provider = args.judge_provider or args.provider
+    args.judge_model = args.judge_model or DEFAULT_JUDGE_MODELS[args.judge_provider]
+    return args
 
 
-def main() -> int:
-    args = parse_args()
-    use_color = not args.no_color and sys.stdout.isatty()
-
-    evals_dir = Path(__file__).parent
-    model       = args.model       or DEFAULT_MODELS[args.provider]
-    judge_model = args.judge_model or DEFAULT_JUDGE_MODELS[args.provider]
-
-    # Load test cases
-    cases = load_suite(evals_dir, suite=args.suite)
+def select_cases(args) -> list[TestCase]:
+    cases = load_suite(Path(__file__).parent, suite=args.suite)
     if args.skill:
         cases = filter_by_skill(cases, args.skill)
-    elif args.bundle and _HAS_LOADER:
-        bundles = list_bundles()
-        if args.bundle not in bundles:
-            print(f"Error: unknown bundle '{args.bundle}'. Available: {', '.join(bundles)}", file=sys.stderr)
-            return 1
-        import yaml
-        manifest = yaml.safe_load((REPO_ROOT / "skills-manifest.yaml").read_text())
-        bundle_skills = manifest["bundles"][args.bundle]["skills"]
-        cases = filter_by_bundle(cases, bundle_skills)
-
+    elif args.bundle:
+        cases = filter_by_bundle(cases, bundle_skills(args.bundle))
     if args.limit:
         cases = cases[: args.limit]
+    return cases
 
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    use_color = not args.no_color and sys.stdout.isatty()
+
+    try:
+        cases = select_cases(args)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
     if not cases:
         print("No test cases found for the given filters.", file=sys.stderr)
         return 1
 
     print_header(
-        provider=args.provider,
-        model=model,
-        judge_model=judge_model,
-        suite=args.suite,
-        n_cases=len(cases),
-        use_color=use_color,
+        provider=args.provider, model=args.model,
+        judge_model=f"{args.judge_model} ({args.judge_provider})",
+        suite=args.suite, n_cases=len(cases), use_color=use_color,
+        condition=args.condition, repeats=args.repeats,
     )
 
+    jargon_re = jargon_pattern(list_skills())
     results: list[EvalResult] = []
-
-    for idx, case in enumerate(cases, start=1):
-        try:
-            system_prompt = _system_prompt_for_case(
-                case, bundle=args.bundle, no_skills=args.no_skills
-            )
-            response = _run_model(
-                system_prompt, case.prompt, args.provider, model, max_tokens=args.max_tokens
-            )
-            scores = score(
-                prompt=case.prompt,
-                response=response,
-                expected_behavior=case.expected_behavior,
-                failure_modes=case.failure_modes,
-                provider=args.provider,
-                model=judge_model,
-            )
-            result = EvalResult(case=case, response=response, scores=scores)
-        except Exception as exc:
-            # Don't abort the whole run on a single error
-            dummy_scores = ScoreResult(
-                harm_avoidance=1, helpfulness=1, proportionality=1,
-                clarity=1, honesty=1, reasoning=""
-            )
-            result = EvalResult(case=case, response="", scores=dummy_scores, error=str(exc))
-
-        results.append(result)
-        print_result(idx, len(cases), result, use_color=use_color)
+    with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+        # map() keeps the cases in file order while running them in parallel.
+        for idx, result in enumerate(pool.map(lambda c: run_case(c, args, jargon_re), cases), start=1):
+            results.append(result)
+            print_result(idx, len(cases), result, use_color=use_color)
 
     print_summary(results, use_color=use_color)
 
@@ -329,23 +321,25 @@ def main() -> int:
         save_json(
             results=results,
             path=Path(args.output),
-            provider=args.provider,
-            model=model,
-            judge_model=judge_model,
-            suite=args.suite,
-            extra_meta={
-                "skills_loaded": not args.no_skills,
-                "bundle":        args.bundle,
-                "skill":         args.skill,
+            meta={
+                "provider":       args.provider,
+                "model":          args.model,
+                "judge_provider": args.judge_provider,
+                "judge_model":    args.judge_model,
+                "suite":          args.suite,
+                "condition":      args.condition,
+                "skills_loaded":  args.condition not in ("none", "placebo"),
+                "bundle":         args.bundle,
+                "skill":          args.skill,
+                "repeats":        args.repeats,
+                "max_tokens":     args.max_tokens,
+                "temperature":    args.temperature,  # null = provider default
             },
         )
 
-    # Exit code: 0 if all pass, 1 if any fail
-    any_fail = any(
-        r.scores.status() == "FAIL" or r.error
-        for r in results
-    )
-    return 1 if any_fail else 0
+    # Exit code: 0 if every answer was judged and passed, 1 otherwise
+    clean = all(o in ("PASS", "WARN") for r in results for o in r.outcomes())
+    return 0 if clean else 1
 
 
 if __name__ == "__main__":

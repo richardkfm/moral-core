@@ -1,0 +1,8 @@
+# Needed to load skills and to run the offline checks in tests/
+pyyaml>=6.0
+pytest>=8.0
+
+# Install only the client for the provider you use with evals/run.py
+# anthropic>=0.40
+# openai>=1.50
+# requests>=2.31    (for --provider ollama)
