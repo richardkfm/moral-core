@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.11.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.12.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
 </div>
@@ -70,6 +70,7 @@ Each skill is a self-contained module with a clear scope, defined behavior, and 
 ```
 moral-core/
 ├── README.md                  # This file
+├── CORE.md                    # Compact shared text on how to answer, loaded in front of RUNTIME.md files
 ├── PRINCIPLES.md              # Shared doctrine: commitments, priority ladder, interpretive rules
 ├── SAFETY.md                  # Safety documentation and guidance
 ├── LIMITATIONS.md             # Honest account of what this framework cannot do
@@ -84,7 +85,7 @@ moral-core/
 ├── ROADMAP.md                 # Project roadmap
 ├── LICENSE                    # MIT
 ├── skills/                    # Ethical skill modules (23 domains, load into any LLM)
-│   ├── general-ethics/        # SKILL.md, EXAMPLES.md, TEST_CASES.md, MISUSE.md, NARRATIVES.md (+ optional RUNTIME.md)
+│   ├── general-ethics/        # SKILL.md, EXAMPLES.md, TEST_CASES.md, MISUSE.md, NARRATIVES.md, RUNTIME.md
 │   ├── conflict-mediation/
 │   ├── deescalation-war-conflict/
 │   ├── anti-sexism/
@@ -158,9 +159,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.9.0** (released 2026-11-17)
+**Current Version: 1.12.0** (released 2026-11-26)
 
-**What's included in v1.9.0:**
+**What's included in v1.12.0:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces as a required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (all 23 skills covered)
 - 8 framework-agnostic reviewer agents for ethical validation and design
@@ -168,7 +169,7 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) 
 - 11 pre-built policy bundles for common deployment contexts (including new `financial-services`, `data-platform`, and `labor-platform` bundles)
 - Evaluation framework that compares prompt conditions (no skills, placebo, full, rules, runtime, or any prompt file) with checklist judging, a judge gate, benign cases for over-refusal, and repeat runs
 - A breakdown of which part of the bundle improves answers to dilemmas (`evals/baselines/2026-11-17-dilemma-breakdown/`): on the one model measured it is `PRINCIPLES.md`, not the skill text
-- `RUNTIME.md`, an experimental compact version of the three `baseline-safe` skills. Revised once after measurement; it stops harmful output about as well as the full bundle but still scores below it overall and is not the recommended mode
+- `CORE.md` plus a `RUNTIME.md` per skill: a compact prompt (`mode="runtime"`) made of a short shared text on how to answer and a 350–470 word text per skill. On Nemotron 3 Nano 30B and 100 held-out cases the `baseline-safe` version passed 62% of checklists against 34% for the bare model and 45% for the full bundle, at 23% of the full bundle's size (`evals/baselines/2026-11-26-core-runtime/`). Most of the effect comes from the core; 15 of the 20 other skills' runtime files are not yet measured
 - Offline consistency checks in `tests/`, run on every pull request
 - Integration guides for LLMs, agents, robotics, education, content moderation, and enterprise
 - Framework-specific guides for LangChain, Dify, and CrewAI with shared Python loader utility

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-26
+
+### Added
+- `CORE.md`: a short shared text on how to answer (about 1,000 words), loaded in front of the `RUNTIME.md` files. It covers declining one part of a request while still doing the job, a six-step method for dilemmas, handing decisions to a person, and uncertainty. `PRINCIPLES.md` is unchanged.
+- `RUNTIME.md` for the 20 skills that had none, in the new format (the skill's domain on top of the core). Five of them were measured on held-out cases; 15 were not.
+- `evals/baselines/2026-11-26-core-runtime/`: two confirmation rounds on Nemotron 3 Nano 30B with rules fixed before each run. On 100 held-out `baseline-safe` cases the shipped compact bundle passes 62% of checklists against 34% for the bare model and 45% for the full bundle, harmful output 8% against 33%, at 23% of the full bundle's prompt size. On five sampled other skills, core + one skill passes 49% against 32%. Round 2 missed one point of its rule (6 points below the full bundle on 12 reserve dilemmas, 5 allowed). `CORE.md` alone accounts for most of the effect.
+- Case files: `evals/scenarios/dilemmas-3.md` and `evals/adversarial/skills-hard.md` (development), `*heldout-2.md`, `*heldout-3.md` and `rollout-sample*-heldout.md` (held out, 115 cases).
+- `evals/run.py`: conditions `core` and `core-only`, `--load-skills`, `--exclude-source`, repeatable `--source`. `evals/compare.py`: `--suite`, `--no-cases`, repeatable source filters.
+- Loader: `load_core()` and `include_core`.
+
+### Changed
+- `mode="runtime"` now loads `CORE.md` + `RUNTIME.md` and leaves `PRINCIPLES.md` out by default (`include_principles` defaults to `False` in this mode). Pass `include_principles=True, include_core=False` for the previous composition.
+- `RUNTIME.md` of `general-ethics`, `epistemic-humility` and `human-oversight` rewritten for the new format.
+- `docs/skill-authoring-guide.md`, `integrations/frameworks/README.md`, `evals/README.md`, `CLAUDE.md`: runtime mode is no longer described as not recommended; the guides describe the new format and its limits.
+
+### Fixed
+- `evals/run.py` imports the provider client before its worker threads start; lazy imports from several threads lost the first answers of a run.
+
+## [1.9.0 – 1.11.0] - 2026-11-17
+
 ### Added
 - `evals/baselines/2026-11-17-dilemma-breakdown/`: which part of the full `baseline-safe` bundle improves answers to dilemma cases, on Nemotron 3 Nano 30B over 36 dilemma cases. `PRINCIPLES.md` carries it (+12 points pass rate averaged over four kinds of skill text, 95% interval 6 to 18); skill text without `PRINCIPLES.md` adds nothing, and the compact runtime text alone lowers the pass rate by 16 points. Within `PRINCIPLES.md`, the four sections on refusal, escalation, transparency and uncertainty do as well as the whole document; the other sections do not.
 - `evals/scenarios/dilemmas-2.md`: 20 further dilemma cases, written without sight of `PRINCIPLES.md` or the runtime prompts.
