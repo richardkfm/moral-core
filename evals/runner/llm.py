@@ -108,6 +108,23 @@ def _ollama(system, user, model, max_tokens, temperature, base_url) -> Completio
 
 
 _BACKENDS = {"anthropic": _anthropic, "openai": _openai, "ollama": _ollama}
+_CLIENT_MODULES = {"anthropic": "anthropic", "openai": "openai", "ollama": "requests"}
+
+
+def preload(*providers: str) -> None:
+    """
+    Import the client library of each provider once, in the calling thread.
+
+    The backends import their client lazily. When the first calls come from
+    several worker threads at once, the half-finished import can surface in
+    some of them as ModuleNotFoundError and those answers are lost. A missing
+    library is also reported here, before any test case has run.
+    """
+    import importlib
+
+    for provider in providers:
+        if provider in _CLIENT_MODULES:
+            importlib.import_module(_CLIENT_MODULES[provider])
 
 
 def chat(

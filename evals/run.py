@@ -66,7 +66,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from evals.runner.checklist import judge_checklist
 from evals.runner.judge import score
-from evals.runner.llm import PROVIDERS, chat
+from evals.runner.llm import PROVIDERS, chat, preload
 from evals.runner.metrics import jargon_hits, jargon_pattern
 from evals.runner.parser import TestCase, filter_by_bundle, filter_by_skill, load_suite
 from evals.runner.report import (
@@ -343,6 +343,13 @@ def main(argv: list[str] | None = None) -> int:
         suite=args.suite, n_cases=len(cases), use_color=use_color,
         condition=args.condition_label, repeats=args.repeats,
     )
+
+    try:
+        preload(args.provider, args.judge_provider)
+    except ImportError as exc:
+        print(f"Error: {exc}. Install the client for the chosen provider "
+              f"(see evals/requirements.txt).", file=sys.stderr)
+        return 1
 
     jargon_re = jargon_pattern(list_skills())
     results: list[EvalResult] = []
