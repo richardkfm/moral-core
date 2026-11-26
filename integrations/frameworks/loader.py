@@ -24,6 +24,16 @@ def load_principles() -> str:
     return (MORAL_CORE_PATH / "PRINCIPLES.md").read_text()
 
 
+def load_core() -> str:
+    """Load CORE.md, the short shared text that goes in front of RUNTIME.md files.
+
+    It says how to answer (decline one part and still do the job, work through
+    a dilemma, hand a decision to a person, be open about uncertainty). The
+    RUNTIME.md files rely on it and are not meant to be loaded without it.
+    """
+    return (MORAL_CORE_PATH / "CORE.md").read_text().strip()
+
+
 MODES = ("full", "rules", "runtime")
 
 # Matches the Behavioral Rules section whatever its number: most skills use
@@ -87,8 +97,20 @@ def load_skill(name: str, rules_only: bool = False, mode: str = None) -> str:
     return text
 
 
-def _join_ethics(skill_names: list, mode: str, include_principles: bool) -> str:
+def _resolve_shared(mode: str, include_principles, include_core) -> tuple:
+    """Defaults: full and rules modes get PRINCIPLES.md, runtime mode gets CORE.md."""
+    if include_principles is None:
+        include_principles = mode != "runtime"
+    if include_core is None:
+        include_core = mode == "runtime"
+    return include_principles, include_core
+
+
+def _join_ethics(skill_names: list, mode: str, include_principles=None, include_core=None) -> str:
+    include_principles, include_core = _resolve_shared(mode, include_principles, include_core)
     parts = [load_principles()] if include_principles else []
+    if include_core:
+        parts.append(load_core())
     parts.extend(load_skill(s, mode=mode) for s in skill_names)
     return "\n\n---\n\n".join(parts)
 
@@ -107,7 +129,8 @@ def load_bundle(
     bundle_name: str,
     rules_only: bool = False,
     mode: str = None,
-    include_principles: bool = True,
+    include_principles: bool = None,
+    include_core: bool = None,
 ) -> str:
     """
     Load a pre-built policy bundle from skills-manifest.yaml.
@@ -118,15 +141,16 @@ def load_bundle(
         bundle_name:        Bundle key from skills-manifest.yaml.
         rules_only:         Shorthand for mode="rules".
         mode:               "full", "rules" or "runtime" (see load_skill).
-        include_principles: Put PRINCIPLES.md first (default). Set False for the
-                            smallest prompt; the skills then have no shared
-                            conflict-resolution text.
+        include_principles: Put PRINCIPLES.md first. Default: True for "full"
+                            and "rules", False for "runtime".
+        include_core:       Put CORE.md in front of the skills. Default: True
+                            for "runtime", False otherwise.
 
     Returns:
-        Composed string: PRINCIPLES.md + all skill texts separated by '---'.
+        Composed string: the shared text(s) + all skill texts separated by '---'.
     """
     mode = _resolve_mode(mode, rules_only)
-    return _join_ethics(bundle_skills(bundle_name), mode, include_principles)
+    return _join_ethics(bundle_skills(bundle_name), mode, include_principles, include_core)
 
 
 def compose_system_prompt(
@@ -135,7 +159,8 @@ def compose_system_prompt(
     skills: list = None,
     rules_only: bool = False,
     mode: str = None,
-    include_principles: bool = True,
+    include_principles: bool = None,
+    include_core: bool = None,
 ) -> str:
     """
     Compose a full system prompt by combining a role description with ethical skills.
@@ -149,7 +174,12 @@ def compose_system_prompt(
         skills:             List of individual skill names (e.g. ['general-ethics', 'empathy']).
         rules_only:         Shorthand for mode="rules".
         mode:               "full", "rules" or "runtime" (see load_skill).
-        include_principles: Put PRINCIPLES.md before the skills (default True).
+        include_principles: Put PRINCIPLES.md before the skills. Default: True
+                            for "full" and "rules", False for "runtime".
+        include_core:       Put CORE.md before the skills. Default: True for
+                            "runtime", False otherwise. mode="runtime" with the
+                            defaults gives CORE.md + each skill's RUNTIME.md,
+                            the compact prompt.
 
     Returns:
         Complete system prompt string ready for injection.
@@ -165,9 +195,11 @@ def compose_system_prompt(
     mode = _resolve_mode(mode, rules_only)
 
     if bundle:
-        ethics = _join_ethics(bundle_skills(bundle), mode, include_principles)
+        ethics = _join_ethics(bundle_skills(bundle), mode, include_principles, include_core)
     elif skills:
-        ethics = _join_ethics(list(skills), mode, include_principles)
+        ethics = _join_ethics(list(skills), mode, include_principles, include_core)
+    elif include_core:
+        ethics = load_core()
     else:
         ethics = load_principles()
 

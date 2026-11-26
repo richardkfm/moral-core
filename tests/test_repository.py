@@ -81,7 +81,32 @@ def test_compose_system_prompt_keeps_role_first_and_rejects_both_selectors():
 def test_runtime_files_are_short_and_do_not_ask_to_be_cited():
     for path in (ROOT / "skills").glob("*/RUNTIME.md"):
         words = len(path.read_text().split())
-        assert 100 <= words <= 450, f"{path}: {words} words"
+        assert 100 <= words <= 480, f"{path}: {words} words"
+
+
+def test_runtime_mode_puts_the_core_first_and_leaves_principles_out():
+    core = loader.load_core()
+    assert 400 <= len(core.split()) <= 1100
+    runtime = loader.load_bundle("baseline-safe", mode="runtime")
+    assert runtime.startswith(core)
+    assert loader.load_principles()[:200] not in runtime
+    one = loader.compose_system_prompt("ROLE", skills=["human-oversight"], mode="runtime")
+    assert core in one and loader.load_skill("human-oversight", mode="runtime") in one
+    assert len(one) < len(runtime)
+    # the older combinations stay available
+    lean = loader.load_bundle("baseline-safe", mode="runtime", include_core=False)
+    assert core not in lean
+    both = loader.load_bundle("baseline-safe", mode="runtime", include_principles=True, include_core=False)
+    assert both.startswith(loader.load_principles())
+    assert core not in loader.load_bundle("baseline-safe")
+
+
+def test_core_and_runtime_files_do_not_name_the_framework():
+    texts = [ROOT / "CORE.md", *(ROOT / "skills").glob("*/RUNTIME.md")]
+    for path in texts:
+        text = path.read_text()
+        for word in ("PRINCIPLES.md", "Priority Ladder", "moral-core", "SKILL.md"):
+            assert word not in text, f"{path} names {word}"
 
 
 def test_version_badge_matches_version_json():

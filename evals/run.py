@@ -14,6 +14,8 @@ compare the result files (see evals/compare.py and evals/pairwise.py):
     principles    PRINCIPLES.md alone, no skill text
     full-lean     the full skills without PRINCIPLES.md
     rules-lean    the Behavioral Rules without PRINCIPLES.md
+    core          CORE.md + each skill's RUNTIME.md (the compact prompt)
+    core-only     CORE.md alone, no skill text
     runtime       PRINCIPLES.md + each skill's RUNTIME.md
     runtime-lean  each skill's RUNTIME.md only
     custom        the text of --prompt-file, to try a prompt that is not shipped
@@ -90,17 +92,19 @@ from integrations.frameworks.loader import (
 ROLE = "You are a helpful assistant."
 NO_SKILLS_PROMPT = ROLE
 
-# condition -> (loader mode, include PRINCIPLES.md)
+# condition -> (loader mode, include PRINCIPLES.md, include CORE.md)
 CONDITIONS = {
     "none":         None,
     "placebo":      None,
     "principles":   None,   # PRINCIPLES.md alone
-    "full":         ("full", True),
-    "full-lean":    ("full", False),
-    "rules":        ("rules", True),
-    "rules-lean":   ("rules", False),
-    "runtime":      ("runtime", True),
-    "runtime-lean": ("runtime", False),
+    "full":         ("full", True, False),
+    "full-lean":    ("full", False, False),
+    "rules":        ("rules", True, False),
+    "rules-lean":   ("rules", False, False),
+    "core":         ("runtime", False, True),
+    "core-only":    None,   # CORE.md alone
+    "runtime":      ("runtime", True, False),
+    "runtime-lean": ("runtime", False, False),
     "custom":       None,   # text of --prompt-file
 }
 
@@ -122,7 +126,8 @@ def placebo_prompt(target_chars: int) -> str:
 
 
 def system_prompt_for_case(case: TestCase, bundle: str | None, condition: str = "full",
-                           prompt_text: str | None = None) -> str:
+                           prompt_text: str | None = None,
+                           load_skills: list[str] | None = None) -> str:
     """
     Build the system prompt for the model under test.
 
@@ -141,7 +146,10 @@ def system_prompt_for_case(case: TestCase, bundle: str | None, condition: str = 
         # Same frame as compose_system_prompt(), so only the text differs.
         return f"{ROLE}\n\n## Ethical Framework\n\n{prompt_text.strip()}"
 
-    if bundle:
+    if load_skills:
+        # Exactly these skills, whatever the case targets: core + one skill.
+        selection = {"skills": list(load_skills)}
+    elif bundle:
         selection = {"bundle": bundle}
     elif case.target_skills:
         known = set(list_skills())
@@ -154,13 +162,16 @@ def system_prompt_for_case(case: TestCase, bundle: str | None, condition: str = 
 
     if condition == "principles":
         return compose_system_prompt(ROLE)
+    if condition == "core-only":
+        return compose_system_prompt(ROLE, include_core=True)
 
     if condition == "placebo":
         return placebo_prompt(len(compose_system_prompt(ROLE, **selection)))
 
-    mode, include_principles = CONDITIONS[condition]
+    mode, include_principles, include_core = CONDITIONS[condition]
     return compose_system_prompt(
-        ROLE, mode=mode, include_principles=include_principles, **selection
+        ROLE, mode=mode, include_principles=include_principles,
+        include_core=include_core, **selection
     )
 
 
@@ -227,7 +238,8 @@ def run_sample(case: TestCase, system_prompt: str, repeat: int, args, jargon_re)
 
 def run_case(case: TestCase, args, jargon_re) -> EvalResult:
     try:
-        system_prompt = system_prompt_for_case(case, args.bundle, args.condition, args.prompt_text)
+        system_prompt = system_prompt_for_case(case, args.bundle, args.condition, args.prompt_text,
+                                               args.load_skills)
     except Exception as exc:
         err = f"{type(exc).__name__}: {exc}"
         return EvalResult(case, [Sample(repeat=r, error=err) for r in range(1, args.repeats + 1)])
@@ -253,6 +265,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Which kind of test case to run (default: all)")
     p.add_argument("--skill",  help="Filter to tests targeting a specific skill")
     p.add_argument("--bundle", help="Filter to tests for skills in a bundle; also loads that bundle as system prompt")
+    p.add_argument("--load-skills",
+                   help="Comma-separated skills to load for every case, whatever the case "
+                        "targets (e.g. --skill human-oversight --load-skills human-oversight "
+                        "--condition core tests the core with that one skill)")
     p.add_argument("--condition", default="full", choices=list(CONDITIONS),
                    help="What goes into the system prompt (default: full). "
                         "--skill/--bundle select the test cases under every condition.")
@@ -291,6 +307,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--no-color", action="store_true", help="Disable coloured terminal output")
     args = p.parse_args(argv)
 
+    args.load_skills = [x.strip() for x in (args.load_skills or "").split(",") if x.strip()] or None
     if args.no_skills:
         args.condition = "none"
     args.prompt_text = None
@@ -376,6 +393,7 @@ def main(argv: list[str] | None = None) -> int:
                 "skills_loaded":  args.condition not in ("none", "placebo"),
                 "bundle":         args.bundle,
                 "skill":          args.skill,
+                "load_skills":    args.load_skills,
                 "repeats":        args.repeats,
                 "max_tokens":     args.max_tokens,
                 "temperature":    args.temperature,  # null = provider default
