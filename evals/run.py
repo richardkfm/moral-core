@@ -279,8 +279,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Token budget for each judge reply (default: 2048)")
     p.add_argument("--rubric", action="store_true",
                    help="Also score every answer on the 1-5 rubric (one more judge call each)")
-    p.add_argument("--source",
-                   help="Only test cases whose file path contains this text (e.g. heldout)")
+    p.add_argument("--source", action="append",
+                   help="Only test cases whose file path contains this text (e.g. heldout). "
+                        "May be given several times; a case matching any of them is kept.")
+    p.add_argument("--exclude-source", action="append",
+                   help="Drop test cases whose file path contains this text. May be given several times.")
     p.add_argument("--limit", type=int, help="Run only the first N test cases after filtering")
     p.add_argument("--workers", type=int, default=4,
                    help="Test cases to run in parallel (default: 4)")
@@ -313,7 +316,9 @@ def select_cases(args) -> list[TestCase]:
     elif args.bundle:
         cases = filter_by_bundle(cases, bundle_skills(args.bundle))
     if args.source:
-        cases = [c for c in cases if args.source in c.source_file]
+        cases = [c for c in cases if any(t in c.source_file for t in args.source)]
+    if args.exclude_source:
+        cases = [c for c in cases if not any(t in c.source_file for t in args.exclude_source)]
     if args.limit:
         cases = cases[: args.limit]
     return cases
