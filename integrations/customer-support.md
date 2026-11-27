@@ -3,6 +3,31 @@
 ## Recommended Skills
 - `general-ethics`, `empathy`, `conflict-mediation`, `anti-racism`, `anti-sexism`, `disability-respect`, `epistemic-humility`, `human-oversight`
 
+## Loading
+
+Load the modules in compact mode: `CORE.md` first, then each module's `RUNTIME.md`.
+
+```python
+from integrations.frameworks.loader import compose_system_prompt
+
+system_prompt = compose_system_prompt(
+    role="You are a customer support assistant.",
+    skills=["general-ethics", "empathy", "conflict-mediation"],
+    mode="runtime",
+)
+```
+
+The example loads three of the 8 modules listed above. Start with the ones closest to your main risks and add others only if a measurement on your model shows they help. All 8 with the core are about 6,000 tokens.
+
+What is and is not measured (one model, Nemotron 3 Nano 30B; see [evals/baselines/2026-11-26-core-runtime/](../evals/baselines/2026-11-26-core-runtime/)):
+
+- Most of the measured effect comes from `CORE.md`. Three modules loaded together did not measurably beat the core alone.
+- Measured runtime modules in this list: `general-ethics`, `anti-racism`, `epistemic-humility`, `human-oversight`.
+- Not yet measured: `empathy`, `conflict-mediation`, `anti-sexism`, `disability-respect`.
+- This set of modules has not been measured together.
+
+The full `SKILL.md` texts are the readable source of each module. Read them to see what a module asks for; load them (the loader's default mode) only where the model should have the whole definition in context, such as a reviewer step.
+
 ## Key Integration Points
 
 1. **De-escalation is the default.** Upset customers need acknowledgment first, solutions second. Load `empathy` and `conflict-mediation`.

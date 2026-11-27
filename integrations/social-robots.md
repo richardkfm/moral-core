@@ -1,7 +1,34 @@
 # Integration Guide: Socially Assistive Robots
 
+> **Not tested with robots.** Every measurement of Moral Core is a single-turn text prompt to a language model. Nothing in this guide has been tested on a robot or any other embodied system, in simulation or on hardware. The guide describes what the modules ask of the language model that plans or speaks for the robot; whether that carries over to physical behaviour is unknown. Hardware safety is an engineering task that no prompt replaces. See [SAFETY.md](../SAFETY.md).
+
 ## Recommended Skills
 - `general-ethics`, `elder-protection`, `disability-respect`, `empathy`, `protect-vulnerable`, `abuse-prevention`, `human-oversight`, `epistemic-humility`
+
+## Loading
+
+Load the modules in compact mode: `CORE.md` first, then each module's `RUNTIME.md`.
+
+```python
+from integrations.frameworks.loader import compose_system_prompt
+
+system_prompt = compose_system_prompt(
+    role="You speak for a socially assistive robot in a care facility.",
+    skills=["general-ethics", "elder-protection", "disability-respect"],
+    mode="runtime",
+)
+```
+
+The example loads three of the 8 modules listed above. Start with the ones closest to your main risks and add others only if a measurement on your model shows they help. All 8 with the core are about 6,000 tokens.
+
+What is and is not measured (one model, Nemotron 3 Nano 30B; see [evals/baselines/2026-11-26-core-runtime/](../evals/baselines/2026-11-26-core-runtime/)):
+
+- Most of the measured effect comes from `CORE.md`. Three modules loaded together did not measurably beat the core alone.
+- Measured runtime modules in this list: `general-ethics`, `human-oversight`, `epistemic-humility`.
+- Not yet measured: `elder-protection`, `disability-respect`, `empathy`, `protect-vulnerable`, `abuse-prevention`.
+- This set of modules has not been measured together.
+
+The full `SKILL.md` texts are the readable source of each module. Read them to see what a module asks for; load them (the loader's default mode) only where the model should have the whole definition in context, such as a reviewer step.
 
 ## Context
 

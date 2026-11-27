@@ -1,46 +1,61 @@
 <p align="center"><img width="500" height="500" alt="moralcore_1000-e" src="https://github.com/user-attachments/assets/e9f2ad72-7dc4-4616-8004-6fe59c86096f" /></p>
 
 # Moral Core
-**Ethical Skills Library for LLMs, Agents, and Robots**
+**A compact ethics layer for open-weight language models**
 
 
 
-![Version](https://img.shields.io/badge/version-1.12.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.12.2-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-A collection of reusable, composable ethical skill modules that can be loaded into AI systems as system prompts, instruction layers, or behavioral constraints. Each skill addresses a specific moral concern -- harm prevention, de-escalation, fairness, honesty, care for vulnerable populations -- and can be combined into policy bundles for different deployment contexts.
+A short shared core text plus one small module per moral concern, loaded as a system prompt and measured on held-out cases. It is built for the models people host themselves, which have limited context to spare and no vendor safety layer around them, and it works with any model that accepts a system prompt.
 </div>
-
-
-
 
 ---
 
-## LLM Compatibility
+## What It Is For
 
-`moral-core` works with **any LLM that accepts a system prompt** — Claude, GPT-4, Gemini, Mistral, LLaMA, and others. Skills are plain text files; loading them is a file read and a string concatenation. No SDK, no provider lock-in.
+A mid-size open-weight model answers most ordinary requests well. When a request has a moral side, the model we measured failed in two ways. It would either write the harmful thing because it was asked for politely (the backdated record, the fake reviews, the rule that cancels benefits with nobody checking), or reply "I'm sorry, but I can't help with that" and leave the person with their problem. On hard questions with several parties, it left out considerations a careful answer needs.
 
-**One distinction to be aware of:**
+`moral-core` is a prompt that changes this. Loaded into the system prompt, it makes the model decline the one harmful part, say why, and still do the job the honest way; and it makes the model work through a dilemma instead of settling it in a sentence.
 
-| Component | Compatibility |
-|---|---|
-| `skills/` — the ethical skill modules | Universal. Works with any model or framework. |
-| `agents/` — framework-agnostic reviewer agents | Universal. Plain markdown system prompts. Works with any LLM that accepts system prompts. |
-| `.claude/agents/` — Claude Code subagent definitions | Claude Code only. Reformatted for Claude Code's subagent system with tool access. |
+It has two layers:
 
-If you're not using Claude Code, use the **`agents/`** directory — those are the portable versions. If you are using Claude Code, the `.claude/agents/` versions have file-reading tools attached for tighter integration. The skills are foundational and used by both agent types.
+- **`CORE.md`**, about 1,000 words, always loaded. It says how to answer: help fully with ordinary work, never refuse in one line, a six-step method for dilemmas, when to hand a decision to a person, how to treat uncertainty.
+- **One module per concern**, about 400 words each (`skills/*/RUNTIME.md`): fairness, financial ethics, child safety, human oversight and 19 more. Load the ones your deployment needs.
+
+A core plus three modules is about 3,000 tokens.
+
+## Measured Result
+
+Nemotron 3 Nano 30B, judged by checklist, three answers per case, on cases the texts were not written against and their author did not read. The rules for success were fixed before each run.
+
+100 held-out cases for the `baseline-safe` modules (general ethics, epistemic humility, human oversight):
+
+| system prompt | size | answers meeting their whole checklist | answers containing the harmful part | benign requests answered properly |
+|---|---|---|---|---|
+| none (bare model) | 28 chars | 34% | 33% | 86% |
+| full skill texts + `PRINCIPLES.md` | 59,086 chars | 45% | 7% | 76% |
+| **`CORE.md` + three modules** | **13,321 chars** | **62%** | **8%** | **85%** |
+
+On requests with a harmful part, the share of one-line refusals fell from 18% (bare model) and 56% (full texts) to 10%. On five further modules drawn at random, each tested alone with the core on 55 held-out cases, the pass rate rose from 32% to 49% and harmful output fell from 35% to 18%.
+
+What this does not show:
+
+- **One model, one judge.** Nothing below 26B parameters has been tested. Measure on your own model: `evals/` is built for that.
+- **Most of the effect comes from the core.** A module adds to it on its own domain; three modules loaded together did not measurably beat the core alone.
+- **15 of the 23 modules have not been measured.**
+- **Prompt-level only.** Remove the system prompt and the behaviour is gone. This is not a security boundary.
+
+Full record, including the point where the shipped text missed its own rule by one percentage point: [evals/baselines/2026-11-26-core-runtime/](evals/baselines/2026-11-26-core-runtime/).
 
 ---
 
 ## What This Is
 
-`moral-core` is a library of **prompt-level ethical skills** designed to be:
-
-- **Loaded into LLMs** as system instructions or injected context
-- **Composed together** into policy bundles for specific use cases
-- **Measured, not assumed**: `evals/` compares a model's answers with and without the skills loaded. So far one bundle (`baseline-safe`) has been measured on one small open-weight model: loading it cut harmful output from 26% to 8% of answers, at the cost of answers that often name the framework. See [evals/baselines/](evals/baselines/)
-- **Audited** by reading the plain-text skill definitions
-
-Each skill is a self-contained module with a clear scope, defined behavior, and known limitations. Skills can be loaded individually or bundled into pre-built policy sets.
+- **A system prompt you can read.** Plain text, no SDK, no hidden logic. Loading it is a file read and a string concatenation.
+- **Modular.** One shared core, 23 modules, 11 pre-built bundles for common deployments.
+- **Measured, not assumed.** `evals/` compares a model's answers with and without the prompt on held-out cases, with a control, a placebo and a judge that is checked before it is trusted. Results that did not work are recorded next to the ones that did ([evals/baselines/](evals/baselines/)).
+- **Two forms of every skill.** `RUNTIME.md` is what the model reads. `SKILL.md` is the full definition people read, audit and argue with: scope, rules, edge cases, known misuse, reasoning narratives. The compact text is derived from it.
 
 ## What This Is NOT
 
@@ -57,9 +72,9 @@ Each skill is a self-contained module with a clear scope, defined behavior, and 
 | Principle | What It Means |
 |---|---|
 | **Practical** | Every skill targets a concrete behavioral outcome, not abstract virtue. |
-| **Modular** | Skills are independent units. Load only what you need. 23 skill domains available. |
+| **Modular** | One shared core and 23 independent modules. Load only what you need. |
 | **Composable** | Skills are designed to work together. Conflicts are handled by a defined priority ladder. |
-| **Testable** | Each skill can be evaluated against scenario-based test cases in `evals/`. |
+| **Measured** | Every claim about behaviour rests on held-out cases, a control run and rules fixed before the run. |
 | **Auditable** | Skills are plain text. Anyone can read, critique, and propose changes. |
 | **Honest about limits** | We document what this can and cannot do. See [LIMITATIONS.md](LIMITATIONS.md). |
 
@@ -159,9 +174,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.12.0** (released 2026-11-26)
+**Current Version: 1.12.2** (released 2026-11-27)
 
-**What's included in v1.12.0:**
+**What's included in v1.12.2:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces as a required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (all 23 skills covered)
 - 8 framework-agnostic reviewer agents for ethical validation and design
@@ -203,6 +218,40 @@ If using Claude Code or other AI tools to contribute, read [CLAUDE.md](CLAUDE.md
 ---
 
 ## Quick Start
+
+### Compact mode (recommended)
+
+```python
+from integrations.frameworks.loader import compose_system_prompt
+
+# CORE.md + the three baseline modules, about 3,000 tokens
+system_prompt = compose_system_prompt(
+    role="You are a customer support assistant.",
+    bundle="baseline-safe",
+    mode="runtime",
+)
+
+# or the core with the modules you choose
+system_prompt = compose_system_prompt(
+    role="You are a customer support assistant.",
+    skills=["financial-ethics", "protect-vulnerable"],
+    mode="runtime",
+)
+```
+
+Without the loader it is plain file reads: `CORE.md` first, then `skills/<name>/RUNTIME.md` for each module, joined with blank lines. Always put `CORE.md` in front; the modules are written to rely on it.
+
+Load the prompt once at startup, not per request. Then check what it does on your model:
+
+```bash
+python evals/run.py --bundle baseline-safe --condition none --output none.json
+python evals/run.py --bundle baseline-safe --condition core --output core.json
+python evals/compare.py none.json core.json
+```
+
+### Full skill texts
+
+The sections below load the complete `SKILL.md` files with `PRINCIPLES.md`. They are several times larger and scored lower than the compact mode in the measurement above, and on about half of the answers the model named the framework. Use them when you want the model to have the whole definition in context, for example in a reviewer agent, and for reading and audit.
 
 ### Load a Single Skill
 
@@ -317,7 +366,7 @@ For usage and examples, see [agents/README.md](agents/README.md).
 
 - **LLM applications** -- chatbots, writing assistants, Q&A systems
 - **Agent frameworks** -- autonomous agents, tool-using LLMs, multi-agent systems
-- **Robotics** -- physical robots in care, service, manufacturing, and domestic settings
+- **Robotics** -- physical robots in care, service, manufacturing, and domestic settings (guidance for the language model only; never tested with a robot)
 - **Education** -- tutoring systems, educational content generation, classroom assistants
 - **Content moderation** -- automated moderation, human-in-the-loop review systems
 - **Enterprise copilots** -- code assistants, business process automation, internal tools
