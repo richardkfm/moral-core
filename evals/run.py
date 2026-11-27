@@ -313,9 +313,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "May be given several times; a case matching any of them is kept.")
     p.add_argument("--exclude-source", action="append",
                    help="Drop test cases whose file path contains this text. May be given several times.")
-    p.add_argument("--cases", choices=["default", "voice"], default="default",
+    p.add_argument("--cases", choices=["default", "voice", "external"], default="default",
                    help="Which case set to read: default (evals/scenarios and "
-                        "evals/adversarial) or voice (evals/voice, with the voice role)")
+                        "evals/adversarial), voice (evals/voice, with the voice role) or "
+                        "external (evals/external, built from a public benchmark)")
+    p.add_argument("--ids", help="File with one case id per line: run only these cases")
     p.add_argument("--input", choices=["prompt", "heard"], default="prompt",
                    help="Voice cases: send the written prompt, or the text speech "
                         "recognition produced from it (the **Heard:** field)")
@@ -351,7 +353,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def select_cases(args) -> list[TestCase]:
-    dirs = ("voice",) if args.cases == "voice" else ("scenarios", "adversarial")
+    dirs = {"voice": ("voice",), "external": ("external",)}.get(args.cases, ("scenarios", "adversarial"))
     cases = load_suite(Path(__file__).parent, suite=args.suite, dirs=dirs)
     if args.skill:
         cases = filter_by_skill(cases, args.skill)
@@ -361,6 +363,9 @@ def select_cases(args) -> list[TestCase]:
         cases = [c for c in cases if any(t in c.source_file for t in args.source)]
     if args.exclude_source:
         cases = [c for c in cases if not any(t in c.source_file for t in args.exclude_source)]
+    if args.ids:
+        keep = set(Path(args.ids).read_text().split())
+        cases = [c for c in cases if c.id in keep]
     if args.input == "heard":
         missing = [c.id for c in cases if not c.heard]
         if missing:
