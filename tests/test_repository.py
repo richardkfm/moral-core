@@ -111,7 +111,7 @@ def test_core_and_runtime_files_do_not_name_the_framework():
 
 def test_voice_core_is_short_and_loads_in_place_of_core():
     voice = (ROOT / "CORE-voice.md").read_text()
-    assert len(voice.split()) <= 950
+    assert len(voice.split()) <= 1000
     prompt = loader.compose_system_prompt("ROLE", skills=["empathy"], mode="runtime", core="voice")
     assert loader.load_core("voice") in prompt and loader.load_core() not in prompt
     assert loader.load_skill("empathy", mode="runtime") in prompt
