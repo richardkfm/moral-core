@@ -102,11 +102,21 @@ def test_runtime_mode_puts_the_core_first_and_leaves_principles_out():
 
 
 def test_core_and_runtime_files_do_not_name_the_framework():
-    texts = [ROOT / "CORE.md", *(ROOT / "skills").glob("*/RUNTIME.md")]
+    texts = [ROOT / "CORE.md", ROOT / "CORE-voice.md", *(ROOT / "skills").glob("*/RUNTIME.md")]
     for path in texts:
         text = path.read_text()
         for word in ("PRINCIPLES.md", "Priority Ladder", "moral-core", "SKILL.md"):
             assert word not in text, f"{path} names {word}"
+
+
+def test_voice_core_is_short_and_loads_in_place_of_core():
+    voice = (ROOT / "CORE-voice.md").read_text()
+    assert len(voice.split()) <= 700
+    prompt = loader.compose_system_prompt("ROLE", skills=["empathy"], mode="runtime", core="voice")
+    assert loader.load_core("voice") in prompt and loader.load_core() not in prompt
+    assert loader.load_skill("empathy", mode="runtime") in prompt
+    with pytest.raises(ValueError):
+        loader.load_core("video")
 
 
 def test_version_badge_matches_version_json():

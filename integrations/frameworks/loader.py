@@ -24,14 +24,22 @@ def load_principles() -> str:
     return (MORAL_CORE_PATH / "PRINCIPLES.md").read_text()
 
 
-def load_core() -> str:
-    """Load CORE.md, the short shared text that goes in front of RUNTIME.md files.
+# Variants of the shared core: "text" is CORE.md, "voice" is CORE-voice.md,
+# written for replies that are read aloud (short, spoken, checks misheard details).
+CORES = {"text": "CORE.md", "voice": "CORE-voice.md"}
 
-    It says how to answer (decline one part and still do the job, work through
-    a dilemma, hand a decision to a person, be open about uncertainty). The
-    RUNTIME.md files rely on it and are not meant to be loaded without it.
+
+def load_core(core: str = "text") -> str:
+    """Load the short shared text that goes in front of RUNTIME.md files.
+
+    CORE.md says how to answer (decline one part and still do the job, work
+    through a dilemma, hand a decision to a person, be open about uncertainty).
+    core="voice" loads CORE-voice.md, the same for spoken replies. The
+    RUNTIME.md files rely on a core and are not meant to be loaded without one.
     """
-    return (MORAL_CORE_PATH / "CORE.md").read_text().strip()
+    if core not in CORES:
+        raise ValueError(f"Unknown core '{core}'. Available: {', '.join(CORES)}")
+    return (MORAL_CORE_PATH / CORES[core]).read_text().strip()
 
 
 MODES = ("full", "rules", "runtime")
@@ -106,11 +114,12 @@ def _resolve_shared(mode: str, include_principles, include_core) -> tuple:
     return include_principles, include_core
 
 
-def _join_ethics(skill_names: list, mode: str, include_principles=None, include_core=None) -> str:
+def _join_ethics(skill_names: list, mode: str, include_principles=None, include_core=None,
+                 core: str = "text") -> str:
     include_principles, include_core = _resolve_shared(mode, include_principles, include_core)
     parts = [load_principles()] if include_principles else []
     if include_core:
-        parts.append(load_core())
+        parts.append(load_core(core))
     parts.extend(load_skill(s, mode=mode) for s in skill_names)
     return "\n\n---\n\n".join(parts)
 
@@ -131,6 +140,7 @@ def load_bundle(
     mode: str = None,
     include_principles: bool = None,
     include_core: bool = None,
+    core: str = "text",
 ) -> str:
     """
     Load a pre-built policy bundle from skills-manifest.yaml.
@@ -145,12 +155,13 @@ def load_bundle(
                             and "rules", False for "runtime".
         include_core:       Put CORE.md in front of the skills. Default: True
                             for "runtime", False otherwise.
+        core:               Which core: "text" (CORE.md) or "voice" (CORE-voice.md).
 
     Returns:
         Composed string: the shared text(s) + all skill texts separated by '---'.
     """
     mode = _resolve_mode(mode, rules_only)
-    return _join_ethics(bundle_skills(bundle_name), mode, include_principles, include_core)
+    return _join_ethics(bundle_skills(bundle_name), mode, include_principles, include_core, core)
 
 
 def compose_system_prompt(
@@ -161,6 +172,7 @@ def compose_system_prompt(
     mode: str = None,
     include_principles: bool = None,
     include_core: bool = None,
+    core: str = "text",
 ) -> str:
     """
     Compose a full system prompt by combining a role description with ethical skills.
@@ -180,6 +192,8 @@ def compose_system_prompt(
                             "runtime", False otherwise. mode="runtime" with the
                             defaults gives CORE.md + each skill's RUNTIME.md,
                             the compact prompt.
+        core:               Which core goes in front: "text" (CORE.md, default)
+                            or "voice" (CORE-voice.md, for replies read aloud).
 
     Returns:
         Complete system prompt string ready for injection.
@@ -195,11 +209,11 @@ def compose_system_prompt(
     mode = _resolve_mode(mode, rules_only)
 
     if bundle:
-        ethics = _join_ethics(bundle_skills(bundle), mode, include_principles, include_core)
+        ethics = _join_ethics(bundle_skills(bundle), mode, include_principles, include_core, core)
     elif skills:
-        ethics = _join_ethics(list(skills), mode, include_principles, include_core)
+        ethics = _join_ethics(list(skills), mode, include_principles, include_core, core)
     elif include_core:
-        ethics = load_core()
+        ethics = load_core(core)
     else:
         ethics = load_principles()
 

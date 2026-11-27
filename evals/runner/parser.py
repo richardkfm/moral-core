@@ -54,6 +54,8 @@ class TestCase:
     suite: str = "scenarios"         # "scenarios", "adversarial" or "benign"
     source_file: str = ""            # path of originating file
     checklist: list[ChecklistItem] = field(default_factory=list)
+    heard: str = ""                  # voice cases: the prompt after speech recognition
+    setting: str = ""                # voice cases: device and situation
 
 
 def _parse_fields(block: str) -> dict[str, str]:
@@ -163,25 +165,30 @@ def parse_file(path: Path) -> list[TestCase]:
             suite=suite,
             source_file=str(path),
             checklist=_build_checklist(fields, benign),
+            heard=fields.get("heard", ""),
+            setting=fields.get("setting", ""),
         ))
 
     return cases
 
 
-def load_suite(evals_dir: Path, suite: str = "all") -> list[TestCase]:
+def load_suite(evals_dir: Path, suite: str = "all",
+               dirs: tuple[str, ...] = ("scenarios", "adversarial")) -> list[TestCase]:
     """
     Load test cases from the evals directory.
 
     Args:
         evals_dir: Path to the evals/ directory.
         suite:     "scenarios", "adversarial", "benign", or "all".
+        dirs:      Sub-directories to read. The voice cases in evals/voice/
+                   are read only when asked for (run.py --cases voice).
 
     Returns:
         List of TestCase objects, sorted by source file then index. The suite
         of a case comes from its fields, not from the directory it sits in.
     """
     cases: list[TestCase] = []
-    for sub in ("scenarios", "adversarial"):
+    for sub in dirs:
         for f in sorted((evals_dir / sub).glob("*.md")):
             if f.name == "README.md":
                 continue
