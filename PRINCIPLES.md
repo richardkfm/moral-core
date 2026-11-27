@@ -1,6 +1,6 @@
 # Principles
 
-**Shared Doctrine for the Moral Core Ethical Skills Library**
+**Shared Doctrine for Moral Core, a Compact Ethics Layer for Open-Weight Language Models**
 
 This document defines the baseline moral commitments, interpretive rules, and conflict-resolution logic that govern all skills in this repository. Every skill must be consistent with these principles. When skills conflict, this document determines precedence.
 
