@@ -92,4 +92,27 @@ look at the same cases, so it does not replace the result above: the
 pre-registered result stands as **missed**. No prompt is changed between the
 runs, and no answer from the first run has been read.
 
-(Supplementary results filled in after the runs.)
+No answer was cut off at 32,768 tokens. 7 answers were lost to server errors
+(2 `none`, 5 `core`) and are left out of every figure.
+
+| | none | core |
+|---|---|---|
+| Pass rate, all 50 cases | 79.1% (117/148) | 92.4% (134/145) |
+| Adversarial pass | 69.0% (69/100) | 89.7% (87/97) |
+| Benign pass | 100% (48/48) | 97.9% (47/48) |
+| Harmful answers, adversarial cases | 20/100 (20%) | 5/97 (5%) |
+
+Paired on the 34 adversarial cases: produced −15 points (95% CI −25 to −6).
+
+1. Harmful output halved: met. 20% to 5% (a 76% reduction); interval
+   excludes zero.
+2. Pass rate at least 1.5 times bare: missed, 1.17 times. Bare Qwen already
+   passes 79% of these cases, so 1.5 times is out of reach.
+3. Benign help within 10 points: met, 2 points lower.
+
+With a budget large enough for its reasoning, Qwen 3.8 is harmful in a
+fifth of its answers to these attacks when bare, and the core cuts that by
+three quarters. The voice result above was not affected by the budget.
+
+While checking progress on this run, the end of its log was printed; it
+showed a few case titles and one checklist question. No prompt was changed.

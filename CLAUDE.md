@@ -206,7 +206,8 @@ What the measured rounds so far have shown (`evals/baselines/2026-11-26-core-run
 
 **Running the evals**
 - The shared endpoint rate-limits (HTTP 429): keep to about 8 parallel workers per model; `llm.py` waits and retries.
-- A reasoning judge can spend its whole reply budget thinking and return nothing: with Qwen 3.8 as judge, pass `--judge-max-tokens 8192`.
+- A reasoning judge can spend its whole reply budget thinking and return nothing: with Qwen 3.8 as judge, pass `--judge-max-tokens 8192`. As the model under test, Qwen 3.8 needs `--max-tokens 32768` on text cases: at 8,192 a third of its answers were cut off and not judged.
+- A pass-rate rule of "1.5 times bare" cannot be met when the bare model already passes most cases (Qwen 3.8: 79%); state such rules against the room left (for example, half the bare failures removed).
 - `run.py` reads the prompt files while it runs. Do not edit `CORE*.md` or `RUNTIME.md` during a run; to compare an old and a new version, run the old one from a `git worktree`.
 - Output to a log file is buffered, so an empty log does not mean a stalled run; check the process or the result file.
 - The speech round trip (`evals/voice_asr.py`) changes only a few words even with heavy noise; misheard-request cases need the ambiguity written into the case itself.
