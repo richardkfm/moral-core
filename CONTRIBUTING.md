@@ -4,14 +4,16 @@ This document explains how to contribute skills, domains, evaluations, and impro
 
 ## What moral-core is (and is not)
 
-moral-core is a library of composable ethical skills for LLMs, agents, and robots. Each skill is a concrete, testable instruction set -- not a philosophical essay. Contributions must maintain that standard.
+moral-core is a compact ethics layer for open-weight language models: a short shared text (`CORE.md`) plus one small module per moral concern, loaded as a system prompt and measured on held-out cases. Each skill exists in two forms. `SKILL.md` is the full definition people read, audit and argue with. `RUNTIME.md` is the compact text derived from it that the model reads, loaded behind `CORE.md` with `mode="runtime"`. Each skill is a concrete, testable instruction set -- not a philosophical essay. Contributions must maintain that standard.
+
+A claim that a text changes a model's behaviour needs a measurement behind it. So far that exists for one model, for `CORE.md`, and for eight of the 23 runtime files (see `evals/baselines/2026-11-26-core-runtime/`). Contributions should say what was measured and what was not, in the same way.
 
 This is not a forum for ethical debate. It is an engineering project that encodes specific, defensible behavioral guidelines into machine-readable skill definitions. If you want to argue about metaethics, write a paper. If you want to ship a skill that makes an AI system behave better in a measurable way, you are in the right place.
 
 ## How to propose a new skill or domain
 
 1. **Open an issue first.** Describe the skill or domain you want to add. Include:
-   - The target deployment context (e.g., customer support agent, home robot, moderation system).
+   - The target deployment context (e.g., customer support agent, moderation system, enterprise copilot).
    - The specific behavioral problem the skill addresses.
    - At least two concrete scenarios where the skill changes system behavior.
    - A preliminary list of instructions the skill would contain.
@@ -20,9 +22,11 @@ This is not a forum for ethical debate. It is an engineering project that encode
 
 3. **Write the skill.** Follow the skill authoring template (see below).
 
-4. **Write tests.** Every skill must ship with scenario-based evaluations, including adversarial tests. See Testing Requirements below.
+4. **Derive the runtime version.** Write a `RUNTIME.md` from the finished `SKILL.md` (see The runtime version below).
 
-5. **Open a pull request.** Follow the PR process described below.
+5. **Write tests.** Every skill must ship with scenario-based evaluations, including adversarial tests. See Testing Requirements below.
+
+6. **Open a pull request.** Follow the PR process described below.
 
 ## Contribution requirements
 
@@ -71,43 +75,34 @@ will be rejected immediately and the contributor may be banned. See CODE_OF_COND
 
 ## Skill authoring template
 
-Every skill file must follow this structure:
+A skill is a directory `skills/<kebab-case-name>/` with these files:
 
-```
-skill:
-  name: <kebab-case-name>
-  version: <semver>
-  domain: <domain-name>
-  description: <one-line plain-English description>
+| File | Content |
+|---|---|
+| `SKILL.md` | The full definition in the 15 sections of [docs/skill-authoring-guide.md](docs/skill-authoring-guide.md): purpose, scope, core principles, behavioral rules, priorities, escalation, failure modes, edge cases, safety boundaries. This is the source. |
+| `EXAMPLES.md` | Concrete examples, including edge cases and near-misses. |
+| `TEST_CASES.md` | Test cases with scenario, risk type, desired and unacceptable traits. |
+| `MISUSE.md` | How the skill could be misused or fail, and mitigations. |
+| `NARRATIVES.md` | Two or three fictional reasoning traces through hard cases. |
+| `RUNTIME.md` | The compact version the model reads. See the next section. |
 
-  context:
-    deployment: <where this skill is intended to be used>
-    assumptions: <what the skill assumes about the runtime environment>
-    limitations: <what the skill does NOT cover>
+Register the skill in `skills-manifest.yaml`. Every instruction in `SKILL.md` carries its justification, and tradeoffs and misuse are stated, as required above.
 
-  instructions:
-    - id: <unique-id>
-      text: <imperative instruction>
-      justification: <why this instruction exists>
-      priority: <critical | high | medium | low>
+## The runtime version
 
-  tradeoffs:
-    - description: <tension this skill creates>
-      mitigation: <how to manage the tension>
+`mode="runtime"` is the recommended way to load Moral Core: `CORE.md` first, then the `RUNTIME.md` of each loaded skill. A skill without a `RUNTIME.md` cannot be loaded that way, so a new skill is expected to ship one.
 
-  misuse_analysis:
-    - vector: <how this skill could be misused>
-      severity: <high | medium | low>
-      mitigation: <how to reduce misuse risk>
+- **Format.** 350–470 words, in the structure given in [docs/skill-authoring-guide.md](docs/skill-authoring-guide.md#runtimemd): what to simply help with, what to change, the legitimate version, what to weigh in hard cases, one worked example. It adds the skill's domain and does not repeat what `CORE.md` says about how to answer.
+- **Derived, not independent.** Every line comes from the skill's `SKILL.md`. A `RUNTIME.md` must not introduce behaviour the skill does not have. When you change one, change the other.
+- **Measured or labelled.** The pull request does one of two things:
+  - reports a run of the core with the new module against the bare model (`evals/run.py --skill <name> --load-skills <name> --condition core` against `--condition none`, then `evals/compare.py`), on cases the text was not written against, with the model, judge and case files named; or
+  - states plainly that the `RUNTIME.md` is unmeasured.
 
-  examples:
-    - scenario: <concrete situation>
-      expected_behavior: <what the system should do>
-    - scenario: <concrete situation>
-      expected_behavior: <what the system should do>
-```
+  An unmeasured file can be merged. It is listed as unmeasured in `skills/README.md` until someone runs it. Do not describe a module as effective because a neighbouring module was measured.
+- **Held-out cases stay held out.** Files under `evals/` with `heldout` in their name are for checking a text once. Do not read them or their failures while writing or revising a `RUNTIME.md`, and never tune wording to them. Use the development files named in `CLAUDE.md`.
+- **`CORE.md` is shared by every skill.** A change to it is not part of a skill contribution. It needs a measured comparison on the baseline cases and on other skills' cases, and maintainer review.
 
-You may add fields, but you must not remove any of the above.
+A measurement that shows no effect, or a worse result, is a valid contribution. Record it in `evals/baselines/` like the ones that worked.
 
 ## Pull request process
 
@@ -117,7 +112,8 @@ You may add fields, but you must not remove any of the above.
    - Summary of what the PR adds or changes.
    - Link to the issue it addresses.
    - Summary of tradeoffs and misuse vectors.
-   - Confirmation that all tests pass.
+   - Confirmation that all tests pass (`python -m pytest tests`).
+   - For a new or changed `RUNTIME.md`: the measurement, or the statement that it is unmeasured.
    - Any open questions for reviewers.
 
 3. **Review requirements:**
@@ -151,6 +147,8 @@ Reviewers should not approve a skill simply because they agree with its ethical 
 
 ## Testing requirements
 
+Run the offline checks before every pull request: `python -m pytest tests`. They call no model.
+
 Every skill must include:
 
 ### Scenario tests
@@ -163,13 +161,16 @@ At least three adversarial tests attempting to:
 - Use social engineering prompts to override the skill's constraints.
 - Test behavior under ambiguous or incomplete information.
 
-Adversarial tests go in `evals/adversarial/`. Scenario tests go in `evals/scenarios/`.
+Adversarial tests go in `evals/adversarial/`. Scenario tests go in `evals/scenarios/`. Every runnable case needs `**Must:**` / `**Must not:**` checklist lines (see `evals/README.md`); `tests/` enforces this.
+
+### Benign cases
+Include ordinary requests from the skill's domain that the model should simply help with. A skill that makes a model refuse or hedge on these does harm of its own. See `evals/scenarios/should-help.md`.
 
 ### Rubric
 A scoring rubric for evaluating system responses under this skill. Rubrics go in `evals/rubrics/`.
 
 ### Benchmark baselines
-Where possible, include baseline measurements showing system behavior with and without the skill loaded. Benchmarks go in `evals/benchmarks/`.
+Where possible, include baseline measurements showing model behavior with and without the skill loaded, in runtime mode (see The runtime version above). Recorded runs and their write-ups go in `evals/baselines/`.
 
 ## Style guide
 

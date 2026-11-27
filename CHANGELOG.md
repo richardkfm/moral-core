@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The documents that still described the project as an "Ethical Skills Library for LLMs, Agents, and Robots" and recommended loading the full bundle now follow the README: a compact, measured ethics layer for open-weight language models, loaded with `mode="runtime"` (`CORE.md` + `skills/*/RUNTIME.md`), with the full `SKILL.md` texts as the readable source. Each of them states the limits of the measurement: one model, most of the effect from `CORE.md`, 15 of 23 runtime files unmeasured, only `baseline-safe` measured as a set.
+  - `USE_CASES.md`: new "How to Load" section; every scenario names its unmeasured modules.
+  - `ROADMAP.md`: status section rewritten for 1.12 (was 1.6.1). Near-term focus is new held-out cases (all existing ones are used), measuring the remaining 15 runtime files, a model under 26B parameters, and bundles beyond `baseline-safe`.
+  - `skills/README.md` and its copy `.claude/skills/README.md`: rewritten for 23 modules and six files per skill (were 18 and four), with a column saying whether each `RUNTIME.md` has been measured, and all 11 bundles.
+  - `CONTRIBUTING.md`: new section "The runtime version". A new skill is expected to ship a `RUNTIME.md`, and the pull request either reports a measurement against the bare model or states that the file is unmeasured. The outdated YAML skill template is replaced by the actual file list and a pointer to `docs/skill-authoring-guide.md`.
+  - `integrations/`: the use-case guides, `policy-bundles.md` and the LangChain, Dify, CrewAI and template guides load in runtime mode and list their unmeasured modules. `policy-bundles.md` now covers all 11 bundles with the membership of `skills-manifest.yaml` (four bundles were missing and four were out of date).
+  - `CLAUDE.md`: overview and "Token Cost Saving Strategies" lead with `mode="runtime"`.
+  - `skills-manifest.yaml` description.
+- Robot scenarios (`USE_CASES.md`, `integrations/home-robots.md`, `integrations/social-robots.md`, the `robotics-care` bundle) stay, marked as never tested with a robot: every measurement is a text prompt to a language model.
+
 ## [1.12.1] - 2026-11-27
 
 ### Changed

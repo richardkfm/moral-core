@@ -6,13 +6,14 @@ This document provides guidance for AI assistants (like Claude) contributing to 
 
 ## Overview
 
-**moral-core** is an ethical skills library for LLMs, agents, and robots. It encodes behavioral guidelines into plain-text skill modules that can be loaded into AI systems as system prompts or instruction layers.
+**moral-core** is a compact, measured ethics layer for open-weight language models. A short shared text (`CORE.md`) and one small module per moral concern (`skills/*/RUNTIME.md`) are loaded as a system prompt with `mode="runtime"`. The full `SKILL.md` texts are the readable source the modules are derived from.
 
 When working on this project:
 - **Respect the existing framework.** Don't refactor core files without explicit authorization.
 - **Prioritize clarity and auditability.** Plain text. No hidden logic. Anyone should be able to read and understand.
 - **Follow the priority ladder** in [PRINCIPLES.md](PRINCIPLES.md) when resolving design conflicts.
 - **Test your changes** against the evaluation framework in `evals/`.
+- **Do not overstate what is measured.** The recorded result is for one model (`evals/baselines/2026-11-26-core-runtime/`). Most of the effect comes from `CORE.md`, and 15 of the 23 `RUNTIME.md` files are unmeasured. Say so wherever a document recommends loading them.
 
 ---
 
@@ -215,9 +216,9 @@ docs: update CHANGELOG and add versioning system
 ### Adding a New Ethical Skill Domain
 
 1. Create directory: `skills/{domain-name}/`
-2. Create five files: `SKILL.md`, `EXAMPLES.md`, `TEST_CASES.md`, `MISUSE.md`, `NARRATIVES.md`
+2. Create five files: `SKILL.md`, `EXAMPLES.md`, `TEST_CASES.md`, `MISUSE.md`, `NARRATIVES.md`, then derive a `RUNTIME.md` from the `SKILL.md` (format in `docs/skill-authoring-guide.md`). Either measure it with the core against the bare model or state in the PR that it is unmeasured
 3. Update `skills-manifest.yaml` to register the new skill
-4. Update `README.md` repository structure if adding a new category
+4. Update `README.md` repository structure if adding a new category, and the module table in `skills/README.md`
 5. Update `CHANGELOG.md` with "Added: {skill name} skill domain"
 6. Test against `evals/` framework
 7. Submit PR for review
@@ -262,27 +263,29 @@ docs: update CHANGELOG and add versioning system
 
 When building applications with moral-core, context window cost and token consumption matter. Apply these strategies to keep prompt size manageable without sacrificing ethical coverage.
 
-### 1. Use `rules_only=True` for Tight Contexts
+### 1. Load with `mode="runtime"`
 
-Each `SKILL.md` file is ~1,500–2,500 tokens. The **Behavioral Rules** section (Section 6) is ~300–500 tokens and covers the essential do/don't instructions. Use the loader utility's `rules_only=True` flag when context is limited:
+`mode="runtime"` loads `CORE.md` (~1,300 tokens) and then the `RUNTIME.md` of each skill (~600 tokens each). It is the recommended way to load and by far the smallest:
 
 ```python
-from integrations.frameworks.loader import load_bundle, compose_system_prompt
+from integrations.frameworks.loader import compose_system_prompt
 
-# Full bundle: ~10,000–13,000 tokens
-system = compose_system_prompt(role="...", bundle="baseline-safe")
+# CORE.md + three RUNTIME.md: ~3,000 tokens
+system = compose_system_prompt(role="...", bundle="baseline-safe", mode="runtime")
 
-# Rules-only bundle: ~5,000–6,000 tokens (60% reduction)
-system = compose_system_prompt(role="...", bundle="baseline-safe", rules_only=True)
+# CORE.md + one RUNTIME.md: ~1,900 tokens
+system = compose_system_prompt(role="...", skills=["financial-ethics"], mode="runtime")
 ```
 
-### 2. Load Skills at Module Level, Not Per-Request
+On the one model measured, this mode also scored higher than the full bundle at 23% of its size. That result covers the three `baseline-safe` skills and five sampled others; most of it comes from `CORE.md`, and the other 15 `RUNTIME.md` files are unmeasured. `PRINCIPLES.md` is not loaded in this mode. Always keep `CORE.md` in front: a `RUNTIME.md` is written to rely on it.
 
-Skill files are read from disk. Load them once at startup and reuse the string across requests. Never call `load_skill()` or `load_bundle()` inside a request handler or per-LLM-call function.
+### 2. Load at Module Level, Not Per-Request
+
+Skill files are read from disk. Load them once at startup and reuse the string across requests. Never call `load_skill()`, `load_bundle()` or `compose_system_prompt()` inside a request handler or per-LLM-call function.
 
 ```python
 # Good: load once
-ETHICS_CONTEXT = load_bundle("baseline-safe")
+ETHICS_CONTEXT = load_bundle("baseline-safe", mode="runtime")
 
 def handle_request(user_input):
     return llm.chat(system=ETHICS_CONTEXT, user=user_input)
@@ -290,24 +293,27 @@ def handle_request(user_input):
 
 ### 3. Scope Skills to the Agent's Role
 
-Not every agent needs every skill. A research agent needs `epistemic-humility`; a moderation agent needs `abuse-prevention`. Loading only the relevant skills per agent saves tokens and keeps instructions focused:
+Not every agent needs every skill. A research agent needs `epistemic-humility`; a moderation agent needs `abuse-prevention`. Each module adds about 600 tokens, and on the measured model three modules together did not beat the core alone, so load the few that match the role:
 
 ```python
-researcher_ethics = load_bundle("baseline-safe", rules_only=True)
-moderator_ethics  = load_bundle("anti-abuse")  # full bundle — this is high-stakes
+researcher_ethics = load_bundle("baseline-safe", mode="runtime")
+moderator_ethics  = compose_system_prompt(role="...", skills=["abuse-prevention", "child-safety"], mode="runtime")
 ```
 
-### 4. Skip PRINCIPLES.md for Simple Single-Skill Loads
+### 4. Full Texts Only Where the Whole Definition Is Needed
 
-`PRINCIPLES.md` (~4,000 tokens) contains the priority ladder for resolving conflicts between skills. If you are loading **one skill only** and there are no other skills to conflict with, you can skip it:
+The full `SKILL.md` files (~1,500–2,500 tokens each) with `PRINCIPLES.md` (~4,000 tokens) are the readable source. Load them when the model should have a whole definition in context, for example a reviewer agent. If the full texts are needed but context is tight:
 
 ```python
-# Single skill, no conflict resolution needed — skip PRINCIPLES.md
+# Full bundle: ~10,000–13,000 tokens
+reviewer = compose_system_prompt(role="...", bundle="baseline-safe")
+
+# Behavioral Rules sections only, with PRINCIPLES.md: ~5,000–6,000 tokens
+reviewer = compose_system_prompt(role="...", bundle="baseline-safe", rules_only=True)
+
+# One full skill without PRINCIPLES.md (no other skill to conflict with)
 skill_text = load_skill("empathy")
-system = f"You are a support assistant.\n\n{skill_text}"
 ```
-
-Only include `PRINCIPLES.md` when loading two or more skills that could conflict.
 
 ### 5. Use Cheaper Models for Simple Tasks
 
@@ -330,13 +336,13 @@ In Claude Code, you can target a specific model for a subagent by passing `model
 
 | What you load | Approximate tokens |
 |---------------|--------------------|
+| `CORE.md` alone | ~1,300 |
+| One skill, `mode="runtime"` (`CORE.md` + its `RUNTIME.md`) | ~1,900 |
+| `baseline-safe`, `mode="runtime"` (`CORE.md` + three `RUNTIME.md`) | ~3,000 |
 | `PRINCIPLES.md` alone | ~4,000 |
 | One full `SKILL.md` | ~1,500–2,500 |
 | One `NARRATIVES.md` (3 vignettes) | ~700–1,000 |
 | One skill, Behavioral Rules only | ~300–500 |
-| `CORE.md` alone | ~1,300 |
-| One skill, `mode="runtime"` (`CORE.md` + its `RUNTIME.md`) | ~1,900 |
-| `baseline-safe`, `mode="runtime"` (`CORE.md` + three `RUNTIME.md`) | ~3,000 |
 | `baseline-safe` bundle (full) | ~10,000–11,000 |
 | `baseline-safe` bundle (`rules_only`) | ~5,000–6,000 |
 | `child-safe` bundle (full, 5 skills) | ~14,000–17,000 |

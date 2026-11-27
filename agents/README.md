@@ -1,6 +1,6 @@
 # Moral Core Agents
 
-Framework-agnostic reviewer and designer agents built on the Moral Core ethical skills library.
+Framework-agnostic reviewer and designer agents built on the Moral Core skill definitions (the full `SKILL.md` texts).
 
 ## What These Are
 

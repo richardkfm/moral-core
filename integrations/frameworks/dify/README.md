@@ -16,39 +16,37 @@ Dify is a no-code / low-code platform for building LLM-powered applications usin
 - moral-core repository accessible (locally or via a mounted volume for Code node method)
 - For Method 2: Python runtime enabled in your Dify instance
 
+## Which Mode to Load
+
+The examples in this guide use `mode="runtime"`: `CORE.md`, a short shared text on how to answer, followed by the `RUNTIME.md` of each module. It is the recommended way to load and the smallest (about 3,000 tokens for `baseline-safe`).
+
+Know its limits before relying on it. It has been measured on one model, Nemotron 3 Nano 30B, with single-turn prompts and no tool calls (`evals/baselines/2026-11-26-core-runtime/`). Most of the measured effect comes from `CORE.md`; three modules together did not measurably beat the core alone. Eight of the 23 runtime modules have been measured and 15 have not; of the bundles, only `baseline-safe`. Nothing has been measured inside Dify. Measure on your own model.
+
+The full `SKILL.md` texts with `PRINCIPLES.md` (the loader's default, without `mode`) are the readable source of each module. Load them through a Code node where a model should have a whole definition in context, such as a reviewer step.
+
 ---
 
 ## Method 1: UI Copy-Paste (Quick Start)
 
-The simplest approach. Paste skill text directly into the System Prompt field in the Dify Prompt Editor.
+The simplest approach. Paste `CORE.md` and the compact module texts directly into the System Prompt field in the Dify Prompt Editor.
 
 **When to use:** Prototyping, demos, or low-stakes internal tools where manual updates are acceptable.
 
 **Steps:**
 
 1. Open your Dify app and go to **Orchestrate → System Prompt**.
-2. Open the relevant `SKILL.md` file from this repository. For most deployments, start with:
-   - `PRINCIPLES.md` (priority ladder, conflict resolution rules)
-   - `skills/general-ethics/SKILL.md` (baseline)
-   - `skills/epistemic-humility/SKILL.md` (honesty about uncertainty)
-3. Copy the **Behavioral Rules** section from each skill (Section 6 in each `SKILL.md`). This is the most important section and the most token-efficient.
-4. Paste into the System Prompt field, after your existing role description.
+2. Open `CORE.md` from this repository and copy the whole file. Always paste it first; the module texts are written to sit behind it.
+3. Copy the whole `RUNTIME.md` of each module you need, for example `skills/general-ethics/RUNTIME.md`.
+4. Paste into the System Prompt field, after your existing role description. `CORE.md` is about 5,800 characters and each `RUNTIME.md` about 2,900, so the core with one module fits a 10,000-character field and the core with three modules (about 13,300 characters) does not. Raise the limit or use Method 2.
 
 **Example System Prompt structure in Dify:**
 
 ```
 You are a helpful customer support assistant for [Company].
 
-## Ethical Behavioral Rules
+[Paste CORE.md]
 
-### General Ethics
-[Paste Section 6 from skills/general-ethics/SKILL.md]
-
-### Abuse Prevention
-[Paste Section 6 from skills/abuse-prevention/SKILL.md]
-
-### Human Oversight
-[Paste Section 6 from skills/human-oversight/SKILL.md]
+[Paste skills/general-ethics/RUNTIME.md]
 ```
 
 **Limitation:** Skills will not update automatically when the source files change. Re-paste when you upgrade moral-core.
@@ -72,31 +70,25 @@ Use a Dify **Code node** (Python) to load skills from the filesystem at runtime.
 
 ```python
 from pathlib import Path
-import re
 import yaml
 
 # Update this path to match where moral-core is installed on your server
 MORAL_CORE_PATH = Path("/opt/moral-core")
 
-def load_skill_rules(name: str) -> str:
-    """Load only the Behavioral Rules section of a skill."""
-    text = (MORAL_CORE_PATH / f"skills/{name}/SKILL.md").read_text()
-    match = re.search(r"## 6\. Behavioral Rules\n(.*?)(?=\n## )", text, re.DOTALL)
-    return match.group(1).strip() if match else text
-
-def load_bundle_rules(bundle_name: str) -> str:
-    """Load Behavioral Rules for all skills in a bundle."""
+def load_bundle_runtime(bundle_name: str) -> str:
+    """CORE.md followed by the RUNTIME.md of each module in a bundle."""
     manifest = yaml.safe_load((MORAL_CORE_PATH / "skills-manifest.yaml").read_text())
     skill_names = manifest["bundles"][bundle_name]["skills"]
-    sections = [f"### {name}\n{load_skill_rules(name)}" for name in skill_names]
-    return "\n\n".join(sections)
+    parts = [(MORAL_CORE_PATH / "CORE.md").read_text()]
+    parts += [(MORAL_CORE_PATH / f"skills/{name}/RUNTIME.md").read_text() for name in skill_names]
+    return "\n\n".join(parts)
 
 def main(bundle: str) -> dict:
     """
     Input variable:  bundle (string) — name of the pre-built bundle to load.
     Output variable: ethics_context (string) — composed ethics text for injection.
     """
-    ethics_context = load_bundle_rules(bundle)
+    ethics_context = load_bundle_runtime(bundle)
     return {"ethics_context": ethics_context}
 ```
 
@@ -109,7 +101,6 @@ def main(bundle: str) -> dict:
 ```
 You are a helpful assistant.
 
-## Ethical Behavioral Rules
 {{ethics_context}}
 ```
 
@@ -169,7 +160,7 @@ Response to review:
 |---------------|--------------------|-------|
 | General chatbot | `baseline-safe` | Minimum for any user-facing app |
 | Customer support | `anti-abuse` | Adds harassment and manipulation protection |
-| Educational assistant | `child-safe` | Use full skill text, not `rules_only` |
+| Educational assistant | `child-safe` | Most of its runtime modules are unmeasured, `child-safety` among them; test before deployment |
 | Civic / government app | `civic-governance` | Democratic legitimacy and fairness |
 | Content moderation | `anti-abuse` + `protect-vulnerable` | Load individually |
 | Healthcare-adjacent | `baseline-safe` + `human-oversight` | Always defer to professionals |
@@ -189,11 +180,12 @@ Dify's context window depends on the underlying model. Most models used through 
 
 | Mode | Approximate Characters | Fits in UI field? |
 |------|------------------------|-------------------|
-| Full `baseline-safe` bundle | ~40,000–50,000 | No — use Code node |
-| Behavioral Rules only (3 skills) | ~6,000–9,000 | Yes |
-| Single full skill | ~6,000–10,000 | Borderline |
+| `CORE.md` + one `RUNTIME.md` | ~8,700 | Yes |
+| `CORE.md` + three `RUNTIME.md` (`baseline-safe`) | ~13,300 | No — raise the limit or use Code node |
+| Behavioral Rules only (3 skills) | ~6,000–9,000 | Yes, without `PRINCIPLES.md` |
+| Full `baseline-safe` bundle | ~59,000 | No — use Code node |
 
-Use **Method 2 (Code node)** for full bundle injection. Use **Method 1 (copy-paste)** only with Behavioral Rules sections.
+Use **Method 2 (Code node)** for anything beyond the core with one module.
 
 ## Limitations
 
@@ -201,11 +193,29 @@ Use **Method 2 (Code node)** for full bundle injection. Use **Method 1 (copy-pas
 - **Variable injection risk.** User-controlled variables injected near ethics instructions can be used for prompt injection. Separate ethics context from user input sections.
 - **Workflow node isolation.** In multi-node workflows, each LLM node needs its own ethics context. Ethics set on one node do not carry to the next.
 - **No evaluation tooling built into Dify.** Run evaluation manually using `evals/` before deploying to production.
+- **Not measured in Dify.** The recorded measurements are single-turn prompts sent directly to one model.
 - **Prompt-level only.** Skills do not replace Dify's built-in content moderation settings or output filtering. Both should be used together.
 
 ## Testing Your Integration
 
-1. Build your Dify app with ethics injection enabled.
+1. Build your Dify app with ethics injection enabled. Separately, compare the underlying model with and without the prompt (`evals/run.py --condition none` against `--condition core`, then `evals/compare.py`).
+2. Test using scenarios from `evals/scenarios/multi-stakeholder.md` as user inputs.
+3. Test at least two adversarial prompts from `evals/adversarial/cross-domain-attacks.md`.
+4. Score responses with `evals/rubrics/scoring-guide.md`.
+5. For Method 3 (Ethics Review node), verify the reviewer correctly classifies both SAFE and UNSAFE test cases before going live.
+
+## Limitations
+
+- **No automatic version sync in Method 1.** Manual copy-paste will drift from source files. Pin a version and document when you last updated.
+- **Variable injection risk.** User-controlled variables injected near ethics instructions can be used for prompt injection. Separate ethics context from user input sections.
+- **Workflow node isolation.** In multi-node workflows, each LLM node needs its own ethics context. Ethics set on one node do not carry to the next.
+- **No evaluation tooling built into Dify.** Run evaluation manually using `evals/` before deploying to production.
+- **Not measured in Dify.** The recorded measurements are single-turn prompts sent directly to one model.
+- **Prompt-level only.** Skills do not replace Dify's built-in content moderation settings or output filtering. Both should be used together.
+
+## Testing Your Integration
+
+1. Build your Dify app with ethics injection enabled. Separately, compare the underlying model with and without the prompt (`evals/run.py --condition none` against `--condition core`, then `evals/compare.py`).
 2. Test using scenarios from `evals/scenarios/multi-stakeholder.md` as user inputs.
 3. Test at least two adversarial prompts from `evals/adversarial/cross-domain-attacks.md`.
 4. Score responses with `evals/rubrics/scoring-guide.md`.
