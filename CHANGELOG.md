@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-11-27
+
+### Changed
+- `README.md`: states the project's use case as a compact, measured ethics layer for open-weight models. New sections "What It Is For" and "Measured Result" (held-out figures and their limits); the Quick Start leads with `mode="runtime"`, and the full skill texts are described as the readable source and an alternative. `version.json` description updated to match.
+
 ## [1.12.0] - 2026-11-26
 
 ### Added

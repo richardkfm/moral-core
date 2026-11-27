@@ -1,14 +1,14 @@
 {
-  "version": "1.12.0",
-  "releaseDate": "2026-11-26",
+  "version": "1.12.1",
+  "releaseDate": "2026-11-27",
   "name": "moral-core",
-  "description": "Ethical Skills Library for LLMs, Agents, and Robots",
+  "description": "Compact, measured ethics layer for open-weight language models",
   "repository": "https://github.com/alcoolio/moral-core",
   "license": "MIT",
   "semanticVersion": {
     "major": 1,
     "minor": 12,
-    "patch": 0
+    "patch": 1
   },
   "changelog": "CHANGELOG.md",
   "keywords": [
