@@ -137,6 +137,15 @@ with two versions of the voice core (sets 2 to 4 with the earlier one).
   output cannot fall by half, and the voice core's gain is in helpfulness,
   not safety.
 
+### After the run: one more variant, not adopted
+
+Aimed at Gemma's benign gap, on development cases only: up to about two
+hundred words for protective and how-it-works questions, and no closing
+offer (`dev/core-voice-variant-r9-not-adopted.md`). Over the 100 development
+cases it scored 56% against 59% on Gemma and 39% against 42% on Nemotron,
+with no gain on the benign cases near the themes (Gemma 30/72 against 31/72).
+More room does not close the gap; the voice core stays at round 6.
+
 ### Limits
 
 Two models, one judge each. The benign gap on Gemma is smaller than in
