@@ -60,4 +60,72 @@ third confirmation.
 
 ## Results
 
-(Filled in after the runs.)
+42 cases, 3 answers each; one answer lost to an error (Nemotron,
+`core-voice`). Result files in `heldout/`.
+
+### Nemotron 3 Nano 30B (judge Gemma 4 26B)
+
+| | none | core-voice |
+|---|---|---|
+| Pass rate, all 42 cases | 40.5% (51/126) | 36.8% (46/125) |
+| Adversarial pass | 23.3% (21/90) | 23.6% (21/89) |
+| Benign pass | 83.3% (30/36) | 69.4% (25/36) |
+| Harmful answers, adversarial cases | 9/90 (10%) | 5/89 (6%) |
+| Median length | 129 words | 75 words |
+| Answers with written formatting | 56% | 8% |
+
+Paired on the 30 adversarial cases: produced −4 points (95% CI −11 to +1).
+
+**Rule on the primary model: not replicated.**
+
+1. Harmful output halved: **missed.** 10% to 6%, interval includes zero.
+2. Pass rate no lower: **missed**, 36.8% against 40.5%.
+3. Benign help within 10 points: **missed**, 13.9 points lower.
+4. Spoken form: met. Median 75 words, formatting in 8%.
+
+### Gemma 4 26B (judge Qwen 3.8 27B)
+
+| | none | core-voice |
+|---|---|---|
+| Pass rate | 31.7% (40/126) | 49.2% (62/126) |
+| Adversarial pass | 12.2% (11/90) | 52.2% (47/90) |
+| Benign pass | 80.6% (29/36) | 41.7% (15/36) |
+| Harmful answers, adversarial cases | 1/90 | 1/90 |
+
+5. Pooled harm over the three voice sets (73 adversarial cases): 3.2% under
+   `none`, 2.3% under `core-voice`, −1 point (−5 to +4): **met** (no
+   higher).
+6. Pass rate at least 1.5 times bare: **met**, 1.55 times.
+
+Benign pass on Gemma fell by 39 points, as in the second set.
+
+### All three voice sets together
+
+Reported for the record; not part of a pre-registered rule except point 5.
+
+| | Nemotron none | Nemotron core-voice | Gemma none | Gemma core-voice |
+|---|---|---|---|---|
+| Harmful answers per adversarial case, 73 cases | 15.1% | 3.7% | 3.2% | 2.3% |
+| Paired difference (95% CI) | | −11 (−18 to −6) | | −1 (−5 to +4) |
+
+### What this says
+
+- **The voice core's benefit does not hold up from one set to the next.** On
+  the third set it met every point on Nemotron; on this one, written to the
+  same specification, it missed three of four. Over the three sets together
+  it cuts harmful answers on Nemotron by three quarters, but on any single
+  set of 30 attack cases the result can go either way, and on this set the
+  bare model was already less harmful (10% against 14% and 28% on the
+  earlier sets).
+- **Benign help is its weak point on both models.** Benign pass fell 14
+  points on Nemotron and 39 on Gemma here. On the development cases it does
+  not fall this way, so the cause has not been found.
+- **On Gemma it does not lower harm, and it does not raise it** over 73
+  cases; it mainly turns flat refusals into short safe completions.
+- `CORE-voice.md` stays experimental. For voice, the text core with its
+  modules remains the measured option for content (second and third sets:
+  harmful 13% and 2%), at the cost of long, formatted answers.
+
+### Limits
+
+Two models, one judge each. The four voice held-out sets are all used.
