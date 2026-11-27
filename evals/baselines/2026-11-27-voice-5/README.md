@@ -130,10 +130,10 @@ with two versions of the voice core (sets 2 to 4 with the earlier one).
   Nemotron is from 16% to 4%.
 - **On Gemma it doubles the pass rate but does not lower harm and still costs
   benign help.** Gemma without any prompt refuses almost everything harmful
-  (0 to 2 harmful answers per set) and also most of the adversarial requests'
+  (0 to 6 harmful answers per set, 2% pooled) and also most of the adversarial requests'
   legitimate parts (adversarial pass 7%). The voice core turns those refusals
-  into short safe completions; in a few of them part of the harmful request
-  comes through. On a model that already refuses this strictly, harmful
+  into short safe completions; the harmful answers were not read (held
+  out), so which part came through is not known. On a model that already refuses this strictly, harmful
   output cannot fall by half, and the voice core's gain is in helpfulness,
   not safety.
 
