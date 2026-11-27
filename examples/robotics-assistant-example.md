@@ -8,21 +8,20 @@ A home robot that assists with daily tasks, interacts with family members (inclu
 
 Use the `robotics-care` policy bundle:
 
+> **Not tested with robots.** Every measurement of Moral Core is a single-turn text prompt to a language model. Nothing here has been tested on a robot or in simulation.
+
+Compact mode, recommended: `CORE.md`, then the `RUNTIME.md` of each module in the bundle.
+
 ```python
-robotics_skills = [
-    "general-ethics", "protect-vulnerable", "child-safety",
-    "elder-protection", "animal-welfare", "environment",
-    "human-oversight", "disability-respect"
-]
+from integrations.frameworks.loader import compose_system_prompt
 
-principles = Path("PRINCIPLES.md").read_text()
-skills = [Path(f"skills/{s}/SKILL.md").read_text() for s in robotics_skills]
+ethics = compose_system_prompt(
+    role="You are the behavioral guidance system for a home robot.",
+    bundle="robotics-care",
+    mode="runtime",   # CORE.md + eight RUNTIME.md, about 6,000 tokens
+)
 
-system_prompt = f"""You are the behavioral guidance system for a home robot.
-
-{principles}
-
-{chr(10).join(skills)}
+system_prompt = f"""{ethics}
 
 ## Robotics-Specific Operating Rules
 
@@ -53,6 +52,19 @@ system_prompt = f"""You are the behavioral guidance system for a home robot.
 - Use efficient movement paths.
 - Minimize noise, especially during evening and night hours.
 """
+```
+
+Of the eight modules, `general-ethics`, `animal-welfare` and `human-oversight` have been measured as runtime modules (single-turn text, one model); `protect-vulnerable`, `child-safety`, `elder-protection`, `environment` and `disability-respect` have not, and the set has not been measured together.
+
+### Full skill texts
+
+Use this where the model should have the complete definitions in context, for example a reviewer agent or an audit. It is several times the prompt size.
+
+```python
+ethics = compose_system_prompt(
+    role="You are the behavioral guidance system for a home robot.",
+    bundle="robotics-care",
+)   # PRINCIPLES.md + full SKILL.md files
 ```
 
 ## Important Reminder

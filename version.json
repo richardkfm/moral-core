@@ -1,5 +1,5 @@
 {
-  "version": "1.12.2",
+  "version": "1.12.3",
   "releaseDate": "2026-11-27",
   "name": "moral-core",
   "description": "Compact, measured ethics layer for open-weight language models",
@@ -8,7 +8,7 @@
   "semanticVersion": {
     "major": 1,
     "minor": 12,
-    "patch": 2
+    "patch": 3
   },
   "changelog": "CHANGELOG.md",
   "keywords": [

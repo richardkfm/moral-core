@@ -1,6 +1,6 @@
 # Safety
 
-**Safety Documentation for the Moral Core Ethical Skills Library**
+**Safety Documentation for Moral Core, a Compact Ethics Layer for Open-Weight Language Models**
 
 ---
 

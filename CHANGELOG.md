@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `CLAUDE.md`: overview and "Token Cost Saving Strategies" lead with `mode="runtime"`.
   - `skills-manifest.yaml` description.
 - Robot scenarios (`USE_CASES.md`, `integrations/home-robots.md`, `integrations/social-robots.md`, the `robotics-care` bundle) stay, marked as never tested with a robot: every measurement is a text prompt to a language model.
+- `examples/` (all six files) and `docs/compatibility-matrix.md`: the main code examples load in runtime mode (`CORE.md` + `RUNTIME.md`), each with a short full-texts variant and a line on which of its modules are measured. The moderation and education examples called a `load_bundle_from` function that does not exist; they now use `compose_system_prompt`. The robotics example states that nothing has been tested on a robot; its hardware safety sections are unchanged.
+- `PRINCIPLES.md`, `SAFETY.md`, `LIMITATIONS.md`: the one line in each that names the project now uses the current description. No other change to these files.
 
 ## [1.12.1] - 2026-11-27
 

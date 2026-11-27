@@ -2,48 +2,58 @@
 
 ## Basic Composition
 
-Skills are designed to be concatenated. Load PRINCIPLES.md first (it contains conflict resolution rules), then add skills.
+Compact mode, recommended: load `CORE.md` first, then the `RUNTIME.md` of each chosen skill. `PRINCIPLES.md` is not loaded.
+
+```python
+from integrations.frameworks.loader import compose_system_prompt
+
+system_prompt = compose_system_prompt(
+    role="You are a helpful assistant.",
+    skills=["general-ethics", "empathy", "epistemic-humility"],
+    mode="runtime",   # CORE.md + three RUNTIME.md, about 3,000 tokens
+)
+```
+
+Without the loader:
 
 ```python
 from pathlib import Path
 
-# Always load principles first
-principles = Path("PRINCIPLES.md").read_text()
-
-# Load selected skills
+core = Path("CORE.md").read_text()
 skill_names = ["general-ethics", "empathy", "epistemic-humility"]
-skills = [Path(f"skills/{s}/SKILL.md").read_text() for s in skill_names]
+modules = [Path(f"skills/{s}/RUNTIME.md").read_text() for s in skill_names]
 
-system_prompt = f"""You are a helpful assistant.
-
-## Core Principles
-{principles}
-
-## Ethical Skills
-{"---".join(skills)}
-"""
+system_prompt = "\n\n".join(["You are a helpful assistant.", core, *modules])
 ```
 
 ## Using a Policy Bundle
 
 ```python
-BUNDLES = {
-    "baseline-safe": ["general-ethics", "epistemic-humility", "human-oversight"],
-    "child-safe": ["child-safety", "protect-vulnerable", "empathy", "digital-ethics", "human-oversight"],
-    "inclusive-assistant": ["anti-sexism", "anti-racism", "disability-respect", "empathy", "elder-protection"],
-}
+from integrations.frameworks.loader import compose_system_prompt
 
-def load_bundle(name):
-    principles = Path("PRINCIPLES.md").read_text()
-    skills = [Path(f"skills/{s}/SKILL.md").read_text() for s in BUNDLES[name]]
-    return f"{principles}\n\n{'---'.join(skills)}"
+system_prompt = compose_system_prompt(
+    role="You are a helpful assistant.",
+    bundle="baseline-safe",   # or "child-safe", "inclusive-assistant", ...
+    mode="runtime",
+)
+```
 
-system_prompt = f"You are a helpful assistant.\n\n{load_bundle('baseline-safe')}"
+Only `baseline-safe` has been measured as a set (one model, Nemotron 3 Nano 30B: 62% of checklists passed against 34% for the bare model and 45% for the full texts, with most of the effect coming from `CORE.md`; `evals/baselines/2026-11-26-core-runtime/`). Other bundles are reasoned selections that have not been measured; see [policy-bundles.md](../integrations/policy-bundles.md).
+
+### Full skill texts
+
+Use this where the model should have the complete definitions in context, for example a reviewer agent or an audit. It is several times the prompt size.
+
+```python
+system_prompt = compose_system_prompt(
+    role="You are a helpful assistant.",
+    skills=["general-ethics", "empathy", "epistemic-humility"],
+)   # PRINCIPLES.md + three full SKILL.md files, about 10,000 tokens
 ```
 
 ## Handling Conflicts Between Skills
 
-When skills give conflicting guidance, the Priority Ladder in PRINCIPLES.md resolves it:
+When the full texts are loaded, the Priority Ladder in PRINCIPLES.md resolves conflicts between skills. In compact mode `PRINCIPLES.md` is not in the prompt; `CORE.md` and the `RUNTIME.md` files carry the conduct guidance instead, and the ladder below is the reference to use when you review a conflict yourself:
 
 1. Prevent immediate severe harm (highest)
 2. Protect vulnerable beings
@@ -56,14 +66,11 @@ When skills give conflicting guidance, the Priority Ladder in PRINCIPLES.md reso
 
 The skill aligned with the higher-priority level wins.
 
-## Token Budget Optimization
+## Token Budget
 
-If you are constrained on prompt tokens, you can load only the Behavioral Rules section from each skill:
-
-```python
-import re
-
-def extract_rules(skill_text):
-    match = re.search(r'## 6\. Behavioral Rules\n(.*?)(?=\n## )', skill_text, re.DOTALL)
-    return match.group(1) if match else ""
-```
+| What you load | Approximate tokens |
+|---|---|
+| `CORE.md` + one `RUNTIME.md` | ~1,900 |
+| `CORE.md` + three `RUNTIME.md` | ~3,000 |
+| `PRINCIPLES.md` + three full `SKILL.md` | ~10,000-11,000 |
+| `PRINCIPLES.md` + three Behavioral Rules sections (`rules_only=True`) | ~5,000-6,000 |

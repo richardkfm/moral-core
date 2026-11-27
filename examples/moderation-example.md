@@ -6,16 +6,24 @@ An automated content moderation system for a community forum that handles user r
 
 ## Configuration
 
+Compact mode, recommended: `CORE.md`, then the `RUNTIME.md` of each module.
+
 ```python
+from integrations.frameworks.loader import compose_system_prompt
+
 skills = [
     "general-ethics", "anti-racism", "anti-sexism",
     "abuse-prevention", "child-safety", "digital-ethics",
     "deescalation-war-conflict", "epistemic-humility", "human-oversight"
 ]
 
-system_prompt = f"""You are a content moderation assistant for a community forum.
+ethics = compose_system_prompt(
+    role="You are a content moderation assistant for a community forum.",
+    skills=skills,
+    mode="runtime",
+)
 
-{load_bundle_from(skills)}
+system_prompt = f"""{ethics}
 
 ## Moderation Guidelines
 
@@ -47,4 +55,17 @@ system_prompt = f"""You are a content moderation assistant for a community forum
 - Transparency. Users should understand why their content was moderated.
 - Appeals. Provide a path for human review of moderation decisions.
 """
+```
+
+Loaded as above, the prompt is `CORE.md` plus nine `RUNTIME.md` files, about 6,500 tokens. Measured runtime modules in this list: `general-ethics`, `anti-racism`, `digital-ethics`, `epistemic-humility`, `human-oversight`. Not yet measured: `anti-sexism`, `abuse-prevention`, `deescalation-war-conflict`, `child-safety`. This set has not been measured together, and the only measurements are single-turn prompts on one model (`evals/baselines/2026-11-26-core-runtime/`).
+
+### Full skill texts
+
+Use this where the model should have the complete definitions in context, for example a reviewer agent or an audit. It is several times the prompt size.
+
+```python
+full_ethics = compose_system_prompt(
+    role="You are a content moderation assistant for a community forum.",
+    skills=skills,
+)   # PRINCIPLES.md + full SKILL.md files
 ```

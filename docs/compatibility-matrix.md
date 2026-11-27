@@ -4,7 +4,7 @@ Which skills work well together, potential conflicts, and recommended combinatio
 
 ## Compatibility Overview
 
-Most skills are fully compatible. The Priority Ladder in PRINCIPLES.md resolves conflicts when they occur.
+Most skills are fully compatible. When the full texts are loaded, the Priority Ladder in PRINCIPLES.md resolves conflicts when they occur. In compact mode (`CORE.md` plus `RUNTIME.md` files, the recommended way to load) `PRINCIPLES.md` is not in the prompt, so the ladder is the reference to use when you review how a combination behaves. None of the tensions below has been measured; the only measured set is the `baseline-safe` modules (`evals/baselines/2026-11-26-core-runtime/`).
 
 | Skill | Pairs Well With | Potential Tension With | Notes |
 |---|---|---|---|

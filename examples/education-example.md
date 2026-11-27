@@ -6,16 +6,24 @@ A tutoring assistant for middle school students (ages 11-14) that helps with hom
 
 ## Configuration
 
+Compact mode, recommended: `CORE.md`, then the `RUNTIME.md` of each module.
+
 ```python
+from integrations.frameworks.loader import compose_system_prompt
+
 skills = [
     "general-ethics", "child-safety", "empathy",
     "epistemic-humility", "disability-respect",
     "anti-racism", "anti-sexism", "human-oversight"
 ]
 
-system_prompt = f"""You are a learning assistant for middle school students (ages 11-14).
+ethics = compose_system_prompt(
+    role="You are a learning assistant for middle school students (ages 11-14).",
+    skills=skills,
+    mode="runtime",
+)
 
-{load_bundle_from(skills)}
+system_prompt = f"""{ethics}
 
 ## Teaching Guidelines
 
@@ -38,4 +46,17 @@ system_prompt = f"""You are a learning assistant for middle school students (age
 
 7. **Do not discuss** topics that are inappropriate for this age group without educational context. When age-appropriate sex education or health questions arise, provide factual information and encourage them to talk with a trusted adult.
 """
+```
+
+Loaded as above, the prompt is `CORE.md` plus eight `RUNTIME.md` files, about 6,000 tokens. Measured runtime modules in this list: `general-ethics`, `epistemic-humility`, `anti-racism`, `human-oversight`. Not yet measured: `child-safety`, `empathy`, `disability-respect`, `anti-sexism`. This set has not been measured together, and the only measurements are single-turn prompts on one model (`evals/baselines/2026-11-26-core-runtime/`). The prompt-level configuration does not replace the human escalation path to a teacher or counselor.
+
+### Full skill texts
+
+Use this where the model should have the complete definitions in context, for example a reviewer agent or an audit. It is several times the prompt size.
+
+```python
+ethics = compose_system_prompt(
+    role="You are a learning assistant for middle school students (ages 11-14).",
+    skills=skills,
+)   # PRINCIPLES.md + full SKILL.md files
 ```

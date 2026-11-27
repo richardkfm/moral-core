@@ -2,7 +2,7 @@
 
 **An Honest Account of What Moral Core Cannot Do**
 
-This document describes the known limitations of the Moral Core ethical skills library. Read this before relying on these skills in production.
+This document describes the known limitations of Moral Core, a compact ethics layer for open-weight language models. Read this before relying on these skills in production.
 
 ---
 
