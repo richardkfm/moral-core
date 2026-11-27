@@ -46,7 +46,8 @@ evals/
 │   ├── README.md              # Guide to adversarial testing
 │   ├── cross-domain-attacks.md # Prompts exploiting skill interactions
 │   ├── baseline-safe-hard.md  # Harder cases for the baseline-safe bundle
-│   └── baseline-safe-heldout.md  # Held-out cases: never tune prompt wording on these
+│   ├── skills-hard.md         # Development cases for five further skills
+│   └── *heldout*.md           # Held-out cases: never tune prompt wording on these
 ├── benchmarks/                # Quantitative benchmarks
 │   └── benchmark-matrix.md    # Domain coverage and risk matrix
 ├── rubrics/                   # Scoring rubrics
@@ -56,7 +57,8 @@ evals/
     ├── README.md              # Guide to scenario testing
     ├── multi-stakeholder.md   # Scenarios with conflicting ethical demands
     ├── dilemmas-2.md          # 20 further dilemma cases, written blind to PRINCIPLES.md and the runtime prompts
-    ├── heldout.md             # Held-out dilemmas and benign cases
+    ├── dilemmas-3.md          # 16 development dilemma cases
+    ├── *heldout*.md           # Held-out dilemmas and benign cases
     ├── should-help.md         # Benign cases: the right behaviour is to help
     └── skill-conflicts.md     # Two-skill conflict scenarios (used by run_conflicts.py)
 ```
@@ -92,12 +94,12 @@ python evals/run.py --bundle baseline-safe --condition none \
 # 3. One run per condition you want to compare
 python evals/run.py --bundle baseline-safe --condition full \
     --output evals/results/full.json
-python evals/run.py --bundle baseline-safe --condition runtime-lean \
-    --output evals/results/runtime-lean.json
+python evals/run.py --bundle baseline-safe --condition core \
+    --output evals/results/core.json
 
 # 4. Compare with the control
 python evals/compare.py evals/results/none.json \
-    evals/results/full.json evals/results/runtime-lean.json
+    evals/results/full.json evals/results/core.json
 ```
 
 ### Prompt Conditions
@@ -108,8 +110,10 @@ python evals/compare.py evals/results/none.json \
 | `placebo` | Neutral reference text, as long as the full prompt | Whether a difference comes from the content or just from a long prompt |
 | `full` (default) | `PRINCIPLES.md` + complete `SKILL.md` files | The prompt most integrations load today |
 | `rules` | `PRINCIPLES.md` + each skill's Behavioral Rules | `rules_only=True` in the loader |
-| `runtime` | `PRINCIPLES.md` + each skill's `RUNTIME.md` | The compact version, with the shared doctrine |
-| `runtime-lean` | each skill's `RUNTIME.md` only | The smallest prompt |
+| `core` | `CORE.md` + each skill's `RUNTIME.md` | The compact prompt, `mode="runtime"` in the loader |
+| `core-only` | `CORE.md` alone | What the shared core does without any skill text |
+| `runtime` | `PRINCIPLES.md` + each skill's `RUNTIME.md` | An older combination, kept to reproduce earlier runs |
+| `runtime-lean` | each skill's `RUNTIME.md` only | Likewise; the runtime files are written to sit behind `CORE.md` |
 | `principles` | `PRINCIPLES.md` alone | What the shared doctrine does without any skill text |
 | `full-lean` | full skills without `PRINCIPLES.md` | What the skills do without the shared doctrine |
 | `rules-lean` | Behavioral Rules without `PRINCIPLES.md` | The same for the rules-only form |
@@ -183,7 +187,9 @@ out on a real answer, add that answer as a fixture.
 | `--bundle` | — | Filter to tests for a bundle; loads that bundle |
 | `--condition` | `full` | Prompt condition, see above |
 | `--prompt-file` | — | Test the text of a file as the ethics part of the system prompt (condition `custom:<file name>`), for prompts that are not shipped |
-| `--source` | — | Only test cases whose file path contains this text, e.g. `heldout` |
+| `--source` | — | Only test cases whose file path contains this text, e.g. `heldout`. Repeatable |
+| `--exclude-source` | — | Drop test cases whose file path contains this text. Repeatable |
+| `--load-skills` | — | Load exactly these skills for every case, e.g. `--skill X --load-skills X --condition core` for the core with one skill |
 | `--repeats` | `3` | Answers collected per test case |
 | `--provider` | `anthropic` | `anthropic`, `openai`, or `ollama` |
 | `--model` | provider default | Model to test |
