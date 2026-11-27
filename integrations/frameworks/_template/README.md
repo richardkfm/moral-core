@@ -47,6 +47,7 @@ from integrations.frameworks.loader import compose_system_prompt
 system = compose_system_prompt(
     role="You are a helpful assistant.",
     bundle="baseline-safe",
+    mode="runtime",  # CORE.md + RUNTIME.md files, the recommended mode
 )
 
 # TODO: show how to pass `system` into [Framework]'s configuration
@@ -89,7 +90,7 @@ from integrations.frameworks.loader import load_bundle, load_skill
 |----------|--------------------|-------|
 | General chatbot | `baseline-safe` | Minimum viable layer |
 | Customer support | `anti-abuse` | Adds abuse and harassment protection |
-| Children's app | `child-safe` | Critical risk — use full bundle, not rules_only |
+| Children's app | `child-safe` | Critical risk. Most of its runtime modules are unmeasured, `child-safety` among them; test before deployment |
 | [Framework-specific use case] | [bundle] | [notes] |
 
 ## Token Budget
@@ -99,17 +100,25 @@ from integrations.frameworks.loader import load_bundle, load_skill
 
 | Mode | Approximate Tokens | When to Use |
 |------|--------------------|-------------|
-| Full bundle | ~10,000–17,000 | Default; models with large context windows |
-| `rules_only=True` | ~5,000–6,000 | Tight context budgets or many tools loaded |
+| `mode="runtime"` (`baseline-safe`) | ~3,000 | Recommended default |
+| `mode="runtime"`, one module | ~1,900 | One concern on top of the core |
+| `rules_only=True` (`baseline-safe`) | ~5,000–6,000 | `PRINCIPLES.md` + Behavioral Rules sections |
+| Full bundle (`baseline-safe`) | ~10,000–11,000 | Reviewer agents; the whole definitions in context |
 
 ```python
-# Token-optimized injection
+# Recommended: compact mode
 system = compose_system_prompt(
     role="You are a helpful assistant.",
     bundle="baseline-safe",
-    rules_only=True,  # Behavioral Rules only, ~300 tokens per skill
+    mode="runtime",  # CORE.md + one RUNTIME.md per module
 )
 ```
+
+> State what has and has not been measured. As of 2026-11-26 the compact mode
+> is measured on one model with single-turn prompts, most of the effect comes
+> from `CORE.md`, and 15 of the 23 runtime modules are unmeasured
+> (`evals/baselines/2026-11-26-core-runtime/`). Do not claim a measured effect
+> inside your framework unless you ran one.
 
 ## Limitations
 
@@ -125,9 +134,10 @@ system = compose_system_prompt(
 
 > Describe how to verify the integration works correctly.
 
-1. Run a baseline scenario from `evals/scenarios/` against your configured [Framework] application.
-2. Test at least one adversarial prompt from `evals/adversarial/cross-domain-attacks.md`.
-3. Score the response using the rubric in `evals/rubrics/scoring-guide.md`.
+1. Compare your model with and without the prompt: `python evals/run.py --bundle baseline-safe --condition none` against `--condition core`, then `python evals/compare.py` (see `evals/README.md`).
+2. Run a baseline scenario from `evals/scenarios/` against your configured [Framework] application.
+3. Test at least one adversarial prompt from `evals/adversarial/cross-domain-attacks.md`.
+4. Score the response using the rubric in `evals/rubrics/scoring-guide.md`.
 
 ---
 

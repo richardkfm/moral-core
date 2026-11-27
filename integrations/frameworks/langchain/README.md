@@ -9,13 +9,21 @@ LangChain is a Python framework for building LLM-powered applications using comp
 - **LCEL chains are stateless.** Each `Runnable` in a chain receives only what you pass it. A downstream chain has no awareness of ethics context loaded in an upstream chain unless you explicitly thread it through.
 - **LangGraph nodes are isolated.** In multi-agent graphs, each node constructs its own messages. A research node and a writing node can have different (or no) ethical constraints unless you set them per node.
 - **Tool calls bypass the system prompt.** When an agent calls a tool, the tool result is injected mid-conversation. Ethical skills in the system prompt continue to apply, but only if the system prompt was set correctly at graph initialization.
-- **Memory and retrieval can dilute context.** Long conversations or retrieval-augmented prompts push the system message toward the edge of the context window. Use `rules_only=True` to keep the ethics footprint small.
+- **Memory and retrieval can dilute context.** Long conversations or retrieval-augmented prompts push the system message toward the edge of the context window. Use `mode="runtime"` to keep the ethics footprint small.
 
 ## Prerequisites
 
 - moral-core repository cloned or available as a git submodule
 - LangChain installed: `pip install langchain langchain-core langchain-openai`
 - PyYAML installed: `pip install pyyaml`
+
+## Which Mode to Load
+
+The examples in this guide use `mode="runtime"`: `CORE.md`, a short shared text on how to answer, followed by the `RUNTIME.md` of each module. It is the recommended way to load and the smallest (about 3,000 tokens for `baseline-safe`).
+
+Know its limits before relying on it. It has been measured on one model, Nemotron 3 Nano 30B, with single-turn prompts and no tool calls (`evals/baselines/2026-11-26-core-runtime/`). Most of the measured effect comes from `CORE.md`; three modules together did not measurably beat the core alone. Eight of the 23 runtime modules have been measured and 15 have not; of the bundles, only `baseline-safe`. Nothing has been measured inside LangChain or LangGraph. Measure on your own model.
+
+The full `SKILL.md` texts with `PRINCIPLES.md` (the loader's default, without `mode`) are the readable source of each module. Load them where an agent should have a whole definition in context, such as an ethics reviewer.
 
 ## Integration Patterns
 
@@ -33,6 +41,7 @@ llm = ChatOpenAI(model="gpt-4o")
 system = compose_system_prompt(
     role="You are a helpful assistant.",
     bundle="baseline-safe",
+    mode="runtime",
 )
 
 prompt = ChatPromptTemplate.from_messages([
@@ -58,6 +67,7 @@ def build_chain(deployment: str):
     system = compose_system_prompt(
         role="You are a helpful assistant.",
         bundle=DEPLOYMENT_BUNDLES[deployment],
+        mode="runtime",
     )
     prompt = ChatPromptTemplate.from_messages([
         ("system", system),
@@ -66,9 +76,9 @@ def build_chain(deployment: str):
     return prompt | llm
 ```
 
-### Pattern 2: LCEL Chain with Token-Optimized Injection
+### Pattern 2: LCEL Chain with Individual Modules
 
-For applications with tight context budgets or many tool results, load only the Behavioral Rules section of each skill.
+Instead of a bundle, load the core with the modules you choose. This keeps the prompt small for applications with tight context budgets or many tool results.
 
 ```python
 from langchain_core.prompts import ChatPromptTemplate
@@ -78,11 +88,11 @@ from integrations.frameworks.loader import compose_system_prompt
 
 llm = ChatOpenAI(model="gpt-4o-mini")
 
-# rules_only=True loads ~300 tokens per skill instead of ~2000
+# CORE.md + four RUNTIME.md files, about 600 tokens per module
 system = compose_system_prompt(
     role="You are a research assistant.",
     skills=["general-ethics", "epistemic-humility", "human-oversight", "digital-ethics"],
-    rules_only=True,
+    mode="runtime",
 )
 
 chain = (
@@ -208,7 +218,7 @@ executor = AgentExecutor(agent=agent, tools=[], verbose=True)
 | General chatbot | `baseline-safe` | Minimum for any deployment |
 | Customer support agent | `anti-abuse` | Adds harassment and manipulation protection |
 | Research or RAG agent | `baseline-safe` + `epistemic-humility` | See individual skill loading |
-| Children's education app | `child-safe` | Use full bundle, not `rules_only` |
+| Children's education app | `child-safe` | Most of its runtime modules are unmeasured, `child-safety` among them; test before deployment |
 | Civic or government tool | `civic-governance` | Includes democratic-legitimacy and justice-fairness |
 | Diverse user populations | `inclusive-assistant` | Covers disability, elder care, anti-discrimination |
 
@@ -216,15 +226,16 @@ executor = AgentExecutor(agent=agent, tools=[], verbose=True)
 
 | Mode | Approximate Tokens | When to Use |
 |------|--------------------|-------------|
-| Full bundle (`baseline-safe`) | ~10,000–11,000 | Default for GPT-4o / Claude with 128k+ context |
-| `rules_only=True` | ~5,000–6,000 | GPT-4o-mini, many tools, or long conversation history |
-| Single full skill | ~1,500–2,500 | When only one specific skill is needed |
+| `mode="runtime"` (`baseline-safe`) | ~3,000 | Recommended default |
+| `mode="runtime"`, one module | ~1,900 | One concern on top of the core |
+| `rules_only=True` (`baseline-safe`) | ~5,000–6,000 | `PRINCIPLES.md` + Behavioral Rules sections |
+| Full bundle (`baseline-safe`) | ~10,000–11,000 | Reviewer agents; the whole definitions in context |
 
 In LangGraph, load skills at module level (outside node functions) so they are read from disk once, not on every graph invocation:
 
 ```python
 # Load once at module level
-AGENT_SKILLS = load_bundle("baseline-safe")
+AGENT_SKILLS = load_bundle("baseline-safe", mode="runtime")
 
 def my_node(state):
     # AGENT_SKILLS is already in memory
@@ -236,11 +247,13 @@ def my_node(state):
 - **Prompt injection via tool results.** If a tool returns adversarial content designed to override ethical instructions, the system prompt alone cannot fully defend against it. See `evals/adversarial/` for test cases and `SAFETY.md` for guidance.
 - **Long conversation context drift.** In very long conversations, the system message may fall outside the model's effective attention window. Periodically summarize or re-inject key ethical rules as a mid-conversation system message.
 - **No automatic cross-chain propagation.** Ethical skills must be explicitly added to each sub-chain or sub-agent. Composition does not inherit.
+- **Not measured in this framework.** The recorded measurements are single-turn prompts on one model, without tools, memory or retrieval. How the prompt holds up inside a chain or graph is for you to test.
 - **Prompt-level only.** Skill injection does not replace rate limiting, output filtering, or moderation APIs. See `SAFETY.md`.
 
 ## Testing Your Integration
 
-1. Use a scenario from `evals/scenarios/multi-stakeholder.md` as a test input.
-2. Test at least one adversarial prompt from `evals/adversarial/cross-domain-attacks.md`.
-3. Score responses using the rubric in `evals/rubrics/scoring-guide.md`.
-4. For LangGraph agents, verify that each node independently respects its assigned ethical constraints by testing nodes in isolation.
+1. Compare your model with and without the prompt: `python evals/run.py --bundle baseline-safe --condition none` against `--condition core`, then `python evals/compare.py` (see `evals/README.md`).
+2. Use a scenario from `evals/scenarios/multi-stakeholder.md` as a test input.
+3. Test at least one adversarial prompt from `evals/adversarial/cross-domain-attacks.md`.
+4. Score responses using the rubric in `evals/rubrics/scoring-guide.md`.
+5. For LangGraph agents, verify that each node independently respects its assigned ethical constraints by testing nodes in isolation.

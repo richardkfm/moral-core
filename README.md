@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.12.1-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.12.2-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A short shared core text plus one small module per moral concern, loaded as a system prompt and measured on held-out cases. It is built for the models people host themselves, which have limited context to spare and no vendor safety layer around them, and it works with any model that accepts a system prompt.
 </div>
@@ -174,9 +174,9 @@ moral-core/
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (MAJOR.MINOR.PATCH).
 
-**Current Version: 1.12.1** (released 2026-11-27)
+**Current Version: 1.12.2** (released 2026-11-27)
 
-**What's included in v1.12.1:**
+**What's included in v1.12.2:**
 - 23 ethical skill domains covering harm prevention, fairness, honesty, care, research ethics, financial ethics, data privacy, labor rights, basic non-clinical psychological first aid, and more
 - `NARRATIVES.md` reasoning traces as a required skill file — fictional vignettes showing the internal deliberation process behind ethical judgment (all 23 skills covered)
 - 8 framework-agnostic reviewer agents for ethical validation and design
@@ -366,7 +366,7 @@ For usage and examples, see [agents/README.md](agents/README.md).
 
 - **LLM applications** -- chatbots, writing assistants, Q&A systems
 - **Agent frameworks** -- autonomous agents, tool-using LLMs, multi-agent systems
-- **Robotics** -- physical robots in care, service, manufacturing, and domestic settings
+- **Robotics** -- physical robots in care, service, manufacturing, and domestic settings (guidance for the language model only; never tested with a robot)
 - **Education** -- tutoring systems, educational content generation, classroom assistants
 - **Content moderation** -- automated moderation, human-in-the-loop review systems
 - **Enterprise copilots** -- code assistants, business process automation, internal tools

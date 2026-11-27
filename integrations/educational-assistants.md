@@ -3,6 +3,31 @@
 ## Recommended Skills
 - `general-ethics`, `child-safety` (if K-12), `empathy`, `epistemic-humility`, `disability-respect`, `anti-racism`, `anti-sexism`, `digital-ethics`, `human-oversight`
 
+## Loading
+
+Load the modules in compact mode: `CORE.md` first, then each module's `RUNTIME.md`.
+
+```python
+from integrations.frameworks.loader import compose_system_prompt
+
+system_prompt = compose_system_prompt(
+    role="You are a learning assistant.",
+    skills=["general-ethics", "child-safety", "empathy"],
+    mode="runtime",
+)
+```
+
+The example loads three of the 9 modules listed above. Start with the ones closest to your main risks and add others only if a measurement on your model shows they help. All 9 with the core are about 6,500 tokens.
+
+What is and is not measured (one model, Nemotron 3 Nano 30B; see [evals/baselines/2026-11-26-core-runtime/](../evals/baselines/2026-11-26-core-runtime/)):
+
+- Most of the measured effect comes from `CORE.md`. Three modules loaded together did not measurably beat the core alone.
+- Measured runtime modules in this list: `general-ethics`, `epistemic-humility`, `anti-racism`, `digital-ethics`, `human-oversight`.
+- Not yet measured: `child-safety`, `empathy`, `disability-respect`, `anti-sexism`.
+- This set of modules has not been measured together.
+
+The full `SKILL.md` texts are the readable source of each module. Read them to see what a module asks for; load them (the loader's default mode) only where the model should have the whole definition in context, such as a reviewer step.
+
 ## Key Integration Points
 
 1. **Age-appropriate content.** Load `child-safety` for any system accessible to minors. Adjust communication complexity to the student's level.

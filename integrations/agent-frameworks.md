@@ -18,19 +18,22 @@ The `human-oversight` skill is critical for all agent deployments.
 
 ### Pattern 1: System Prompt Injection
 
-Load ethical skills as part of the agent's system prompt, just as with any LLM application.
+Load the core and the modules as part of the agent's system prompt, just as with any LLM application. Compact mode leaves more of the context for tool results.
 
 ```python
+from integrations.frameworks.loader import compose_system_prompt
+
 agent = Agent(
-    system_prompt=f"""You are an autonomous research assistant.
-
-{load_principles()}
-
-{load_skills(["general-ethics", "epistemic-humility", "human-oversight", "digital-ethics"])}
-""",
+    system_prompt=compose_system_prompt(
+        role="You are an autonomous research assistant.",
+        skills=["general-ethics", "epistemic-humility", "human-oversight", "digital-ethics"],
+        mode="runtime",
+    ),
     tools=[search, read_file, write_file]
 )
 ```
+
+**What the measurements do and do not cover.** The recorded runs are single-turn text prompts on one model (`evals/baselines/2026-11-26-core-runtime/`). No run involved tool calls, multi-step plans or several agents. Four of the modules above have been measured in that single-turn setting; `abuse-prevention` in the table below has not. Treat the patterns in this guide as design advice, and test your agent's actions yourself.
 
 ### Pattern 2: Pre-Action Ethics Check
 

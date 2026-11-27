@@ -18,6 +18,14 @@ CrewAI is a Python framework for orchestrating multiple AI agents that collabora
 - PyYAML installed: `pip install pyyaml`
 - An LLM provider configured (e.g., OpenAI, Anthropic)
 
+## Which Mode to Load
+
+The examples in this guide use `mode="runtime"`: `CORE.md`, a short shared text on how to answer, followed by the `RUNTIME.md` of each module. It is the recommended way to load and the smallest (about 3,000 tokens for `baseline-safe`).
+
+Know its limits before relying on it. It has been measured on one model, Nemotron 3 Nano 30B, with single-turn prompts and no tool calls (`evals/baselines/2026-11-26-core-runtime/`). Most of the measured effect comes from `CORE.md`; three modules together did not measurably beat the core alone. Eight of the 23 runtime modules have been measured and 15 have not; of the bundles, only `baseline-safe`. Nothing has been measured inside CrewAI. Measure on your own model.
+
+The full `SKILL.md` texts with `PRINCIPLES.md` (the loader's default, without `mode`) are the readable source of each module. Load them where an agent should have a whole definition in context, such as an ethics reviewer (Pattern 2).
+
 ---
 
 ## Pattern 1: Backstory Injection
@@ -31,8 +39,8 @@ from integrations.frameworks.loader import compose_system_prompt, load_bundle
 
 llm = ChatOpenAI(model="gpt-4o")
 
-# Load skills once at module level
-baseline_ethics = load_bundle("baseline-safe")
+# Load once at module level: CORE.md + the three baseline modules
+baseline_ethics = load_bundle("baseline-safe", mode="runtime")
 
 researcher = Agent(
     role="Research Analyst",
@@ -89,9 +97,9 @@ from integrations.frameworks.loader import load_bundle
 
 llm = ChatOpenAI(model="gpt-4o")
 
-# The reviewer gets the full bundle; other agents can use rules_only
+# The reviewer gets the full skill texts; other agents get the compact mode
 full_ethics  = load_bundle("baseline-safe")
-light_ethics = load_bundle("baseline-safe", rules_only=True)
+light_ethics = load_bundle("baseline-safe", mode="runtime")
 
 researcher = Agent(
     role="Research Analyst",
@@ -208,7 +216,7 @@ from crewai import Task
 from integrations.frameworks.loader import load_skill
 
 # Load the skill most relevant to this specific task
-child_safety_rules = load_skill("child-safety", rules_only=True)
+child_safety_rules = load_skill("child-safety", rules_only=True)        # Behavioral Rules section only
 human_oversight_rules = load_skill("human-oversight", rules_only=True)
 
 content_moderation_task = Task(
@@ -290,18 +298,19 @@ crew = Crew(
 ## Token Budget
 
 | Mode | Approximate Tokens per Agent | Notes |
-|------|------------------------------|-------|
-| Full bundle (`baseline-safe`) | ~10,000–11,000 | Safe for GPT-4o, Claude |
-| `rules_only=True` | ~5,000–6,000 | Good for large crews (5+ agents) |
-| Individual skills | ~1,500–2,500 per skill | Use Pattern 3 for tight budgets |
+|------|--------------------|-------------|
+| `mode="runtime"` (`baseline-safe`) | ~3,000 | Recommended default |
+| `mode="runtime"`, one module | ~1,900 | One concern on top of the core |
+| `rules_only=True` (`baseline-safe`) | ~5,000–6,000 | `PRINCIPLES.md` + Behavioral Rules sections |
+| Full bundle (`baseline-safe`) | ~10,000–11,000 | Reviewer agents; the whole definitions in context |
 
-For large crews, use `rules_only=True` on most agents and reserve full bundles for the ethics reviewer and manager:
+Use the compact mode on worker agents and reserve the full texts for the ethics reviewer and manager:
 
 ```python
 from integrations.frameworks.loader import load_bundle
 
-# Worker agents: lean
-worker_ethics = load_bundle("baseline-safe", rules_only=True)
+# Worker agents: compact
+worker_ethics = load_bundle("baseline-safe", mode="runtime")
 
 # Reviewer and manager: full
 reviewer_ethics = load_bundle("anti-abuse")
@@ -313,12 +322,14 @@ manager_ethics  = load_bundle("baseline-safe")
 - **Agent-to-agent instructions can bypass ethics.** When one agent produces output consumed by another, the consuming agent's ethical constraints apply — but a producing agent with weak constraints can still influence outputs. Scope skills per agent carefully.
 - **CrewAI delegation can route around guardrails.** If `allow_delegation=True`, an agent can delegate to another agent that may have different constraints. Disable delegation on the ethics reviewer agent.
 - **No shared ethical state.** There is no mechanism for one agent to update another's ethical constraints mid-run. Skills must be set at agent initialization.
+- **Not measured in this framework.** The recorded measurements are single-turn prompts on one model. No crew, delegation or tool use has been measured.
 - **Prompt-level only.** Skill injection does not replace tool-level safety checks, rate limiting, or output filtering. See `SAFETY.md`.
 - **Memory and context can dilute backstory.** In very long crew runs with memory enabled, the backstory may be compressed. Monitor behavior in extended runs.
 
 ## Testing Your Integration
 
-1. Run a scenario from `evals/scenarios/multi-stakeholder.md` through your crew and inspect each agent's output individually.
-2. For the ethics reviewer pattern (Pattern 2), test with at least one deliberately problematic input from `evals/adversarial/cross-domain-attacks.md` and verify the reviewer flags it.
-3. Score final outputs using `evals/rubrics/scoring-guide.md`.
-4. In hierarchical crews, test that the manager agent correctly rejects an output that violates ethical constraints.
+1. Compare your model with and without the prompt: `python evals/run.py --bundle baseline-safe --condition none` against `--condition core`, then `python evals/compare.py` (see `evals/README.md`).
+2. Run a scenario from `evals/scenarios/multi-stakeholder.md` through your crew and inspect each agent's output individually.
+3. For the ethics reviewer pattern (Pattern 2), test with at least one deliberately problematic input from `evals/adversarial/cross-domain-attacks.md` and verify the reviewer flags it.
+4. Score final outputs using `evals/rubrics/scoring-guide.md`.
+5. In hierarchical crews, test that the manager agent correctly rejects an output that violates ethical constraints.
