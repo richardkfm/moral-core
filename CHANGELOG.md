@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Voice (experimental).** `CORE-voice.md`, a spoken version of `CORE.md`, loaded with `compose_system_prompt(..., mode="runtime", core="voice")`. Voice test cases in `evals/voice/` (36 development, 44 held-out), written as spoken transcripts; `evals/voice_asr.py` runs each prompt through text-to-speech, added noise and speech recognition and stores the transcript as a `**Heard:**` line; `evals/voice_form.py` measures length and formatting. `run.py` gains `--cases voice`, `--input heard`, `--role` and the conditions `core-voice` and `core-voice-only`. Held-out result (Nemotron 3 Nano 30B): harmful output on adversarial cases 33% bare, 15% with the voice core, median reply 94 words with formatting in 6%; the pre-registered "no loss in pass rate" point was missed by 2 answers in 132. See `evals/baselines/2026-11-27-voice/`.
+- Every `skills/*/RUNTIME.md` has a section "Keep these in any answer, however short" naming the points an answer in its domain must keep. Not yet measured on held-out cases.
+- `CLAUDE.md`: section "Lessons from Evaluation" with what the measured rounds have shown about method, prompt wording, voice, and running the evals.
+
+### Fixed
+- `evals/runner/llm.py` waits and retries when the endpoint rate-limits (HTTP 429) instead of losing the answer.
+
 ### Changed
 - The documents that still described the project as an "Ethical Skills Library for LLMs, Agents, and Robots" and recommended loading the full bundle now follow the README: a compact, measured ethics layer for open-weight language models, loaded with `mode="runtime"` (`CORE.md` + `skills/*/RUNTIME.md`), with the full `SKILL.md` texts as the readable source. Each of them states the limits of the measurement: one model, most of the effect from `CORE.md`, 15 of 23 runtime files unmeasured, only `baseline-safe` measured as a set.
   - `USE_CASES.md`: new "How to Load" section; every scenario names its unmeasured modules.

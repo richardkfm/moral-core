@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.12.3-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.13.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A short shared core text plus one small module per moral concern, loaded as a system prompt and measured on held-out cases. It is built for the models people host themselves, which have limited context to spare and no vendor safety layer around them, and it works with any model that accepts a system prompt.
 </div>
