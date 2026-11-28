@@ -33,4 +33,4 @@ Thumbs.db
 
 # Public benchmark data, downloaded by evals/external/jailbreakbench.py
 evals/external/data/
-evals/external/jailbreakbench-heldout.md
+evals/external/jailbreakbench-*.md
