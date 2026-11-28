@@ -84,6 +84,7 @@ from integrations.frameworks.loader import (
     bundle_skills,
     compose_system_prompt,
     list_skills,
+    load_core,
 )
 
 # ---------------------------------------------------------------------------
@@ -224,6 +225,20 @@ def run_sample(case: TestCase, system_prompt: str, repeat: int, args, jargon_re)
 
         if completion.truncated:
             return sample  # kept and counted, not judged
+        if args.check_text and completion.text:
+            sample.draft = completion.text
+            verdict = chat(
+                args.provider, args.model, args.check_text,
+                f"User's message:\n<<<\n{case.prompt}\n>>>\n\nDraft reply:\n<<<\n{completion.text}\n>>>",
+                max_tokens=args.max_tokens, temperature=args.temperature,
+            )
+            if verdict.truncated or not verdict.text.strip():
+                raise RuntimeError("Check returned no usable verdict")
+            if verdict.text.strip().strip(".").upper() != "OK":
+                sample.rewritten = True
+                sample.response = verdict.text
+                sample.jargon = jargon_hits(verdict.text, jargon_re)
+                completion = verdict
         if not completion.text:
             raise RuntimeError(
                 f"Model returned no answer text (finish_reason={completion.finish_reason})"
@@ -318,6 +333,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "evals/adversarial), voice (evals/voice, with the voice role) or "
                         "external (evals/external, built from a public benchmark)")
     p.add_argument("--ids", help="File with one case id per line: run only these cases")
+    p.add_argument("--check", help="Second pass: the model checks its own draft with the text of "
+                                   "this file followed by CORE.md; a reply other than OK replaces the draft")
     p.add_argument("--input", choices=["prompt", "heard"], default="prompt",
                    help="Voice cases: send the written prompt, or the text speech "
                         "recognition produced from it (the **Heard:** field)")
@@ -345,6 +362,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         p.error("--repeats must be at least 1")
     if args.input == "heard" and args.cases != "voice":
         p.error("--input heard needs --cases voice")
+    args.check_text = None
+    if args.check:
+        args.check_text = Path(args.check).read_text().strip() + "\n\n---\n\n" + load_core()
+        args.condition_label += f"+check:{Path(args.check).stem}"
     args.role = args.role or (VOICE_ROLE if args.cases == "voice" else ROLE)
     args.model = args.model or DEFAULT_MODELS[args.provider]
     args.judge_provider = args.judge_provider or args.provider
