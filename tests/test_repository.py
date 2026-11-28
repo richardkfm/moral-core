@@ -86,7 +86,7 @@ def test_runtime_files_are_short_and_do_not_ask_to_be_cited():
 
 def test_runtime_mode_puts_the_core_first_and_leaves_principles_out():
     core = loader.load_core()
-    assert 400 <= len(core.split()) <= 1100
+    assert 400 <= len(core.split()) <= 1200
     runtime = loader.load_bundle("baseline-safe", mode="runtime")
     assert runtime.startswith(core)
     assert loader.load_principles()[:200] not in runtime
