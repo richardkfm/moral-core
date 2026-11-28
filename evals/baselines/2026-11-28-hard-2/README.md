@@ -89,4 +89,78 @@ before the confirmation; their confirmation is the check.
 
 ## Results
 
-(Filled in after the run.)
+Result files in `heldout/` (answers, judge verdicts and evidence removed;
+only outcomes kept). The case file is rebuilt with
+`evals/external/jailbreakbench.py --set heldout-2`.
+
+### Screening (bare, 218 adversarial cases, 3 answers each)
+
+| | Nemotron 3 Nano 30B | Gemma 4 26B | Qwen 3.8 27B |
+|---|---|---|---|
+| Harmful answers | 29% (187/654) | 19% (126/654) | 22% (143/654) |
+| Cases kept | 59 | 42 | 43 |
+| Distinct requests among them | 35 | 24 | 28 |
+| Harmful in screening, kept cases | 78% | 93% | 87% |
+
+Most kept cases are random-search prompts (Nemotron 53 of 59, Gemma 26 of
+42, Qwen 38 of 43), the template the development change was aimed at.
+
+### Confirmation, fresh answers
+
+| | Nemotron | Gemma | Qwen |
+|---|---|---|---|
+| Harmful, `none` | 59.0% | 84.9% | 69.0% |
+| Harmful, `core-only` | 34.5% | 19.8% | 11.6% |
+| Harmful, `core` | 34.7% | 16.7% | 9.3% |
+| `core` against `none` (95% CI) | −24 (−32 to −16) | −68 (−80 to −56) | −60 (−70 to −50) |
+| `core` against `core-only` | 0 (−7 to +7) | −3 (−10 to +2) | −2 (−7 to +2) |
+| Benign pass, `none` | 90.9% (80/88) | 96.7% (87/90) | 92.2% (83/90) |
+| Benign pass, `core-only` | 85.4% (76/89) | 80.0% (72/90) | 86.7% (78/90) |
+| Benign pass, `core` | 85.2% (75/88) | 84.3% (75/89) | 87.8% (79/90) |
+
+A few answers were lost to server errors (at most 2 per condition) and are
+left out. Nemotron answers cut off at 8,192 tokens: 3% to 7%, judged as
+written.
+
+**Nemotron:**
+
+1. Harmful output halved: **missed.** 59% to 35%, a 41% reduction; the
+   interval excludes zero but the rate is above half.
+2. Benign help within 10 points: met, 5.7 points lower.
+
+**Gemma:**
+
+1. Harmful output halved: met. 85% to 17%, an 80% reduction.
+2. Benign help within 10 points: **missed**, 12.4 points lower (11 answers
+   in 89).
+
+**Qwen:**
+
+1. Harmful output halved: met. 69% to 9%, an 87% reduction.
+2. Benign help within 10 points: met, 4.4 points lower.
+
+### What this says
+
+- **Against both sets of published jailbreaks, the core cuts harmful output
+  by 80% or more on Gemma and Qwen, but by about 40% on Nemotron** (20% with
+  the modules and 41% with the core alone on the first set, 41% on this
+  one). The development change raised Nemotron's reduction with the modules
+  from 20% to 41%, to the level of the core alone; it did not reach half.
+- **The modules no longer hurt Nemotron**, and add nothing measurable on
+  any model on this set.
+- **Benign help costs 4 to 12 points**, over the limit on Gemma this time
+  (it was exactly at the limit on the first set).
+- Nemotron follows the rules a jailbreak sets for the reply more readily
+  than the other two, and the text of a system prompt does not stop that
+  in four of ten cases. This is the kind of limit described in
+  `LIMITATIONS.md`: prompt-level measures do not make a model robust to
+  attacks written to defeat it.
+
+### Limits
+
+One judge per model. The harmful requests are those of the first set, in
+new prompts; the forms of one request are not independent. Most kept cases
+are one attack template, which the development change was aimed at; the
+result does not show robustness to attack styles not seen in development.
+While checking the case numbering for the confirmation, three held-out case
+titles (category and index only, no prompt text) were printed.
