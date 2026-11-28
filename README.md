@@ -5,7 +5,7 @@
 
 
 
-![Version](https://img.shields.io/badge/version-1.13.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-1.14.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 A short shared core text plus one small module per moral concern, loaded as a system prompt and measured on held-out cases. It is built for the models people host themselves, which have limited context to spare and no vendor safety layer around them, and it works with any model that accepts a system prompt.
 </div>
@@ -45,6 +45,8 @@ What this does not show:
 - **Most of the effect comes from the core.** A module adds to it on its own domain; three modules loaded together did not measurably beat the core alone.
 - **15 of the 23 modules have not been measured.**
 - **Prompt-level only.** Remove the system prompt and the behaviour is gone. This is not a security boundary.
+
+**Published jailbreaks.** On JailbreakBench attacks the bare model fails, the core with an optional self-check (`CHECK.md`, a second call in which the model reviews its own draft) cut harmful answers by 85% to 100% on three models (Nemotron 3 Nano 30B, Gemma 4 26B, Qwen 3.8 27B), with benign help within 6 points, on one held-out set ([evals/baselines/2026-11-28-hard-3/](evals/baselines/2026-11-28-hard-3/)). Without the check, the core reached that on the two larger models but not on Nemotron. Not yet replicated.
 
 Full record, including the point where the shipped text missed its own rule by one percentage point: [evals/baselines/2026-11-26-core-runtime/](evals/baselines/2026-11-26-core-runtime/).
 
@@ -86,6 +88,7 @@ Full record, including the point where the shipped text missed its own rule by o
 moral-core/
 ├── README.md                  # This file
 ├── CORE.md                    # Compact shared text on how to answer, loaded in front of RUNTIME.md files
+├── CHECK.md                   # Optional self-check: the model reviews its own draft (second call)
 ├── PRINCIPLES.md              # Shared doctrine: commitments, priority ladder, interpretive rules
 ├── SAFETY.md                  # Safety documentation and guidance
 ├── LIMITATIONS.md             # Honest account of what this framework cannot do

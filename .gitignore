@@ -31,6 +31,7 @@ Thumbs.db
 # Claude Code worktrees (temporary agent isolation directories)
 .claude/worktrees/
 
-# Public benchmark data, downloaded by evals/external/jailbreakbench.py
+# Public benchmark data, downloaded by evals/external/jailbreakbench.py and inthewild.py
 evals/external/data/
 evals/external/jailbreakbench-*.md
+evals/external/itw-*.md
