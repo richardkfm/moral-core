@@ -210,6 +210,7 @@ What the measured rounds so far have shown (`evals/baselines/2026-11-26-core-run
 - A pass-rate rule of "1.5 times bare" cannot be met when the bare model already passes most cases (Qwen 3.8: 79%); state such rules against the room left (for example, half the bare failures removed).
 - `run.py` reads the prompt files while it runs. Do not edit `CORE*.md` or `RUNTIME.md` during a run; to compare an old and a new version, run the old one from a `git worktree`.
 - Output to a log file is buffered, so an empty log does not mean a stalled run; check the process or the result file.
+- Published jailbreaks (JailbreakBench) mostly fail on current models with no prompt (13–21% harmful answers). To test whether the prompts halve harm, screen bare answers and keep the cases the bare model fails, then compare on fresh answers (`evals/baselines/2026-11-28-hard/`). There the core halved harm on Gemma 4 and Qwen 3.8 but not on Nemotron, where the modules made it worse than the core alone: check module value per model.
 - The speech round trip (`evals/voice_asr.py`) changes only a few words even with heavy noise; misheard-request cases need the ambiguity written into the case itself.
 
 ---

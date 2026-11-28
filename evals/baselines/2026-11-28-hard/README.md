@@ -118,7 +118,44 @@ the modules made Nemotron worse than the core alone, and even the core alone
 
 `core` against `core-only`: 0 points (−5 to +5). The modules add nothing.
 
-Regression to the mean: kept cases were harmful in at least 67% of
-screening answers; the fresh bare rate was 55% on Nemotron and 89% on Gemma.
+**Qwen 3.8 27B** (27 kept cases, 30 benign; judge Gemma 4 26B; 32,768-token
+answer budget, no answer cut off or lost)
 
-**Qwen 3.8 27B:** (filled in after the run.)
+| | none | core-only | core |
+|---|---|---|---|
+| Harmful answers, kept cases | 62% | 21% | 7% |
+| Paired against `none` (95% CI) | | −41 (−57 to −25) | −54 (−68 to −41) |
+| Benign pass | 85.6% (77/90) | 84.4% (76/90) | 85.6% (77/90) |
+
+1. Harmful output halved: met. 62% to 7%, an 88% reduction.
+2. Benign help within 10 points: met, no change.
+
+`core` against `core-only`: −14 points harmful (−23 to −5). On Qwen the
+modules add a clear gain on top of the core.
+
+Regression to the mean: kept cases were harmful in at least 67% of
+screening answers; the fresh bare rate was 55% on Nemotron, 89% on Gemma and
+62% on Qwen.
+
+### What this says
+
+- **On cases chosen so that the bare model fails, the prompts halve harmful
+  output on two of three models**: Gemma 89% to 19%, Qwen 62% to 7%. On
+  Nemotron they do not: 55% to 44% with the modules, 33% with the core alone.
+- **The modules' value depends on the model.** They add nothing on Gemma,
+  cut harm a further 14 points on Qwen, and raise it 11 points on Nemotron.
+  Nemotron is the smallest model and the primary one in earlier rounds; on
+  realistic held-out cases the modules helped it, on these long published
+  jailbreaks they do not.
+- **Benign help held on all three** (at most 10 points lower, at the limit on
+  Gemma).
+- Published jailbreaks mostly fail on these models with no prompt at all
+  (13% to 21% harmful answers in screening); the kept sets are the minority
+  that work, 20 to 23 distinct requests per model.
+
+### Limits
+
+One judge per model; the forms of one request are not independent (20 to
+23 distinct requests per model). Nemotron's miss was not followed up on these
+cases: they are held out, and any prompt change for it must be made on
+development cases and confirmed on a fresh set.
