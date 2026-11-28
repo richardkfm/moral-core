@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -225,7 +226,7 @@ def run_sample(case: TestCase, system_prompt: str, repeat: int, args, jargon_re)
 
         if completion.truncated:
             return sample  # kept and counted, not judged
-        if args.check_text and completion.text:
+        if args.check_text and completion.text and not short_refusal(completion.text):
             sample.draft = completion.text
             verdict = chat(
                 args.provider, args.model, args.check_text,
@@ -234,7 +235,12 @@ def run_sample(case: TestCase, system_prompt: str, repeat: int, args, jargon_re)
             )
             if verdict.truncated or not verdict.text.strip():
                 raise RuntimeError("Check returned no usable verdict")
-            if verdict.text.strip().strip(".").upper() != "OK":
+            first, _, rest = verdict.text.strip().partition("\n")
+            if first.strip().strip(".*").upper() != "OK":
+                if first.strip().strip(".*:").upper() == "REWRITE":
+                    verdict.text = rest.strip()
+                if not verdict.text:
+                    raise RuntimeError("Check asked for a rewrite but gave none")
                 sample.rewritten = True
                 sample.response = verdict.text
                 sample.jargon = jargon_hits(verdict.text, jargon_re)
@@ -281,6 +287,14 @@ def run_case(case: TestCase, args, jargon_re) -> EvalResult:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
+REFUSAL_START = re.compile(r"^\W*(I won['\u2019]t|I can['\u2019]t|I cannot|I['\u2019]m sorry|Sorry)", re.IGNORECASE)
+
+
+def short_refusal(text: str) -> bool:
+    """A short draft that opens by declining carries nothing to check."""
+    return bool(REFUSAL_START.match(text)) and len(text.split()) < 80
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
