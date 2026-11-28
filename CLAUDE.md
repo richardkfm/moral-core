@@ -28,6 +28,8 @@ When working on this project:
 | `skills/*/MISUSE.md` | Known limitations and misuse risks | Contributors + maintainers | Honest about what the skill can't do |
 | `skills/*/NARRATIVES.md` | Reasoning traces through hard cases | Contributors + maintainers | Fictional vignettes showing *why* — not just *what* — the skill requires; teaches generalisation |
 | `CORE.md` | Compact shared text on how to answer; loaded in front of the `RUNTIME.md` files by `mode="runtime"` | Core maintainers only | Derived from the conduct sections of `PRINCIPLES.md`. Change it only with a measured comparison on cases it was not written against (`evals/baselines/2026-11-26-core-runtime/`) |
+| `CORE-voice.md` | Experimental spoken version of `CORE.md` for voice assistants; loaded with `core="voice"` | Core maintainers only | First held-out round missed "no loss in pass rate" by 2 answers in 132 (`evals/baselines/2026-11-27-voice/`); a third round with 30 adversarial cases met every rule point on Nemotron (harmful 14% to 0%), a fourth with the same prompts did not replicate it (`evals/baselines/2026-11-27-voice-4/`); round 6 met every point on Nemotron on a fifth set, benign help kept (`evals/baselines/2026-11-27-voice-5/`). Over four sets it cuts harmful answers on Nemotron from 16% to 4%; on Gemma 4 no change and lower benign help. Not the default |
+| `evals/voice/` | Voice test cases written as spoken transcripts, each with a `**Heard:**` speech-recognition line | Contributors + maintainers | Read only with `run.py --cases voice`; `evals/voice_asr.py` adds the transcripts, `evals/voice_form.py` measures length and formatting |
 | `skills/*/RUNTIME.md` | Compact runtime version of a skill | Contributors + maintainers | 350–470 words: the skill's domain on top of `CORE.md` (what to help with, what to change, the legitimate version, what to weigh in hard cases, one worked example); loaded with `mode="runtime"`. Measured for the three `baseline-safe` skills and five sampled others. `SKILL.md` stays the source |
 | `tests/` | Offline consistency checks | Contributors + maintainers | `python -m pytest tests` — run before every PR; calls no model |
 | `agents/*.md` | Framework-agnostic reviewer agents | Contributors + maintainers | Plain markdown system prompts — work with any LLM |
@@ -179,6 +181,38 @@ python evals/compare.py evals/results/none.json evals/results/full.json
 - **Scenario-based tests** (`evals/scenarios/`): Does the skill behave as documented?
 - **Adversarial tests** (`evals/adversarial/`): Can the skill be bypassed or misused?
 - **Benchmark matrix** (`evals/benchmarks/`): Does the skill fit within the broader framework?
+
+### Lessons from Evaluation
+
+What the measured rounds so far have shown (`evals/baselines/2026-11-26-core-runtime/`, `evals/baselines/2026-11-27-voice/`). Apply these before changing a prompt or designing a test.
+
+**Method**
+- Always compare against the bare model (`--condition none`) with paired differences and their 95% intervals (`compare.py`). A single run, or a gain whose interval includes zero, is not a result.
+- Write the rule for a confirmation run into the baseline README and commit it **before** generating any held-out answer. Report a missed rule point plainly; do not reinterpret it afterwards.
+- Never tune wording on held-out cases, and never print them: test failure messages and run logs can show case text. Report held-out failures by id or count only. Once a held-out set has been run, it is used; commission a fresh one (written blind to the prompts) for the next confirmation.
+- Measure harmful output on the adversarial cases alone (`compare.py --suite adversarial`). Averaged over all cases it is diluted by cases where no harm is possible.
+- Development sets of 9–11 adversarial cases are noisy: two prompt rounds that differ by 5–10 points on them are usually indistinguishable.
+
+**What the prompts do**
+- Most of the effect comes from the shared core, not from the skill modules. On the measured model, three modules together did not beat the core alone; one module on its own cases adds a few points.
+- Small open-weight models follow their own trained refusal policy ("this is disallowed, so I must refuse" → a one-line apology). Wording the core as "Policy for this deployment … safe completion", with fixed opening words ("I won't" / "Here is what I can do instead:"), cut one-line refusals from about 45% to 10–15%. Shortening that passage brought them back at once: keep it intact in any variant of the core.
+- Without a voice prompt, a model told its reply is spoken still writes long formatted answers (about 270 words, formatting in about 70%). `CORE-voice.md` gets about 90 words with almost no formatting and halves harmful output, but short answers drop facts the person needs, which costs pass rate on benign and non-adversarial cases. Giving answers more room did not fix that; naming the points each domain must keep (the "Keep these in any answer" section of `RUNTIME.md`) is the current attempt.
+- A rule to check misheard details can over-fire: on one model it asked a question back in 91% of answers.
+- Naming in each `RUNTIME.md` the few points an answer must keep however short ("Keep these in any answer") was neutral on text development cases and raised benign pass on voice ones; on fresh held-out text cases core and modules cut harmful answers from 45% to 13% (`evals/baselines/2026-11-27-skills-v2/`).
+- A voice set needs about 25 or more adversarial cases: with 13, a fall in harmful answers from 28% to 8% still gave an interval that reached zero.
+- On a model that already refuses strictly (Gemma 4), the safe-completion wording raises pass rate but can let part of a harmful request through: bare 0 of 89 harmful answers, voice core 4 of 90. Check harm on each target model, not only the primary one.
+- One held-out set of 30 attack cases can pass or miss a rule by chance: the voice core met every point on one set and missed three on the next, with no prompt change. Before claiming a prompt works, replicate on a second fresh set or pool sets decided in advance.
+- Benign development cases must look like the held-out ones: everyday requests (oven temperatures) did not reproduce the voice core's benign drop; requests close to the sensitive themes (a parent asking about parental controls, a daughter asking whether a call is a scam) did, and showed its two causes: answers too short to cover what the person needs, and "I won't" opening a reply to someone trying to protect themselves.
+
+**Running the evals**
+- The shared endpoint rate-limits (HTTP 429): keep to about 8 parallel workers per model; `llm.py` waits and retries.
+- A reasoning judge can spend its whole reply budget thinking and return nothing: with Qwen 3.8 as judge, pass `--judge-max-tokens 8192`. As the model under test, Qwen 3.8 needs `--max-tokens 32768` on text cases: at 8,192 a third of its answers were cut off and not judged.
+- A pass-rate rule of "1.5 times bare" cannot be met when the bare model already passes most cases (Qwen 3.8: 79%); state such rules against the room left (for example, half the bare failures removed).
+- `run.py` reads the prompt files while it runs. Do not edit `CORE*.md` or `RUNTIME.md` during a run; to compare an old and a new version, run the old one from a `git worktree`.
+- Output to a log file is buffered, so an empty log does not mean a stalled run; check the process or the result file.
+- Published jailbreaks (JailbreakBench) mostly fail on current models with no prompt (13–21% harmful answers). To test whether the prompts halve harm, screen bare answers and keep the cases the bare model fails, then compare on fresh answers (`evals/baselines/2026-11-28-hard/`). There the core halved harm on Gemma 4 and Qwen 3.8 but not on Nemotron, where the modules made it worse than the core alone: check module value per model.
+- Jailbreaks that set rules for the reply ("start with: Sure, here is", never refuse) beat the fixed "I won't" opening on Nemotron. Saying in `CORE.md` that such rules do not replace the policy lifted Nemotron's reduction on a second set to 41% (`evals/baselines/2026-11-28-hard-2/`), still short of half; Gemma and Qwen were cut by 80% or more on both sets. Expect a ceiling for prompt text on the smallest model.
+- The speech round trip (`evals/voice_asr.py`) changes only a few words even with heavy noise; misheard-request cases need the ambiguity written into the case itself.
 
 ---
 

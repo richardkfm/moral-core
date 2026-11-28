@@ -24,9 +24,10 @@ RUNNABLE = [c for c in CASES if c.target_skills]  # skill-conflicts.md is for ru
 # Number of "### N." headings must equal the number of parsed cases, so a
 # formatting slip cannot silently drop a case (the parser once matched none).
 CASE_FILES = sorted(
-    f for sub in ("scenarios", "adversarial") for f in (EVALS / sub).glob("*.md")
+    f for sub in ("scenarios", "adversarial", "voice") for f in (EVALS / sub).glob("*.md")
     if f.name != "README.md"
 )
+VOICE_CASES = load_suite(EVALS, dirs=("voice",))
 
 
 @pytest.mark.parametrize("path", CASE_FILES, ids=lambda p: p.name)
@@ -47,7 +48,7 @@ def test_suites():
     assert all(c.suite == "benign" for c in parse_file(EVALS / "scenarios" / "should-help.md"))
 
 
-@pytest.mark.parametrize("case", RUNNABLE, ids=lambda c: c.id)
+@pytest.mark.parametrize("case", RUNNABLE + VOICE_CASES, ids=lambda c: c.id)
 def test_runnable_case_is_complete(case):
     known = set(run.list_skills())
     assert set(case.target_skills) <= known
@@ -59,6 +60,43 @@ def test_runnable_case_is_complete(case):
         assert item.question.startswith("Does the response") and item.question.endswith("?")
         # Polarity belongs to the heading; a negated question inverts it by accident.
         assert not re.search(r"\b(not|avoid|fail|refrain)\b", item.question), item.question
+
+
+def test_voice_cases_are_separate_and_spoken():
+    # The voice cases are read only with --cases voice, so default runs are unchanged.
+    assert VOICE_CASES and not any("/voice/" in c.source_file for c in CASES)
+    assert len({c.id for c in VOICE_CASES}) == len(VOICE_CASES)
+    # Failures list case ids only, never case text: some of these cases are held out.
+    assert [c.id for c in VOICE_CASES if not c.setting] == []
+    assert [c.id for c in VOICE_CASES if len(c.prompt.split()) > 80] == []
+    # Missing transcripts: run evals/voice_asr.py to add the **Heard:** lines.
+    assert [c.id for c in VOICE_CASES if not c.heard] == []
+
+
+def test_voice_run_uses_the_voice_role_under_every_condition():
+    args = run.parse_args(["--cases", "voice", "--condition", "none"])
+    assert args.role == run.VOICE_ROLE
+    case = VOICE_CASES[0]
+    assert run.system_prompt_for_case(case, None, "none", role=args.role) == run.VOICE_ROLE
+    voice = run.system_prompt_for_case(case, None, "core-voice", role=args.role)
+    assert voice == loader.compose_system_prompt(
+        run.VOICE_ROLE, skills=case.target_skills, mode="runtime", core="voice")
+    assert "out loud" in voice and "out loud" not in run.system_prompt_for_case(case, None, "core", role=args.role)
+
+
+def test_heard_input_replaces_the_prompt():
+    args = run.parse_args(["--cases", "voice", "--input", "heard", "--source", "voice-dev"])
+    cases = run.select_cases(args)
+    assert cases and all(c.prompt == c.heard for c in cases)
+
+
+def test_voice_form_counts_markup_and_words():
+    from evals import voice_form
+    assert voice_form.has_markup("- first\n- second")
+    assert voice_form.has_markup("This is **important**.")
+    assert not voice_form.has_markup("Call your local emergency number now. Are you safe?")
+    m = voice_form.measures(["One two three?", "- a list item"])
+    assert m["n"] == 2 and m["markup"] == 0.5 and m["question"] == 0.5
 
 
 def test_benign_cases_get_the_refusal_item_and_others_do_not():

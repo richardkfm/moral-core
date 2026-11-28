@@ -11,6 +11,7 @@ complete.
 from __future__ import annotations
 
 import os
+import random
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -148,11 +149,26 @@ def chat(
     if provider not in _BACKENDS:
         raise ValueError(f"Unknown provider: {provider}")
     last: Exception | None = None
-    for attempt in range(retries + 1):
+    attempt = waits = 0
+    while True:
         try:
             return _BACKENDS[provider](system, user, model, max_tokens, temperature, base_url)
         except Exception as exc:  # network and gateway errors differ per SDK
             last = exc
-            if attempt < retries:
-                time.sleep(2 * (attempt + 1))
-    raise last  # type: ignore[misc]
+            if _is_rate_limit(exc) and waits < RATE_LIMIT_WAITS:
+                # A shared endpoint refuses when too many calls run at once.
+                # Wait and try again; this does not use up the ordinary retries.
+                waits += 1
+                time.sleep(min(60.0, 5.0 * waits) + random.uniform(0, 3))
+                continue
+            if attempt >= retries:
+                raise last
+            attempt += 1
+            time.sleep(2 * attempt)
+
+
+RATE_LIMIT_WAITS = 12
+
+
+def _is_rate_limit(exc: Exception) -> bool:
+    return "RateLimit" in type(exc).__name__ or "429" in str(exc)[:200]

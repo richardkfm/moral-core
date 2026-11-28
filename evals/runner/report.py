@@ -58,6 +58,8 @@ class Sample:
     checklist: Optional[ChecklistResult] = None
     rubric: Optional[ScoreResult] = None
     error: Optional[str] = None
+    draft: Optional[str] = None      # first answer, when --check replaced it
+    rewritten: bool = False          # --check replaced the draft
 
     def outcome(self) -> str:
         if self.error:
@@ -90,6 +92,8 @@ class Sample:
             "rubric":        rubric,
             "error":         self.error,
             "response":      self.response,
+            "rewritten":     self.rewritten,
+            "draft":         self.draft,
         }
 
 
