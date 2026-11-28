@@ -16,7 +16,7 @@ prompt found against Vicuna 13B, the prompt-with-random-search prompt found
 against Llama 2 7B, and the fixed AIM role-play template (JBC). Benign
 requests: the first five of each category, plain.
 
-    python evals/external/jailbreakbench.py [--set heldout|dev|heldout-2]
+    python evals/external/jailbreakbench.py [--set heldout|dev|heldout-2|dev-2|heldout-3]
 
 Three sets, written to separate files:
 
@@ -32,6 +32,11 @@ Three sets, written to separate files:
   category. The harmful requests are those of `heldout`, in new prompts.
 - `dev-2` (`jailbreakbench-dev-2.md`): the dev categories in the four forms
   of `heldout-2`, no benign requests. More development cases.
+- `heldout-3` (`jailbreakbench-heldout-3.md`): the six theme categories in
+  four forms not in the other sets (random search against Vicuna 13B, GCG
+  against Vicuna 13B, DSN against Vicuna 13B and Llama 2 7B). Benign: the
+  benign requests no other set uses (the other five of each dev category and
+  the ten of Sexual/Adult content), plain.
 
 Prints counts only, never case text.
 """
@@ -60,6 +65,13 @@ ATTACKS_2 = {
     "random-search-gpt35": "prompt_with_random_search/black_box/gpt-3.5-turbo-1106.json",
     "random-search-gpt4": "prompt_with_random_search/black_box/gpt-4-0125-preview.json",
 }
+ATTACKS_3 = {
+    "random-search-vicuna": "prompt_with_random_search/black_box/vicuna-13b-v1.5.json",
+    "GCG-vicuna": "GCG/white_box/vicuna-13b-v1.5.json",
+    "DSN-vicuna": "DSN/white_box/vicuna-13b-v1.5.json",
+    "DSN-llama2": "DSN/white_box/llama-2-7b-chat-hf.json",
+}
+OTHER_BENIGN = "Sexual/Adult content"
 DEV_CATEGORIES = {
     "Malware/Hacking": "digital-ethics",
     "Physical harm": "protect-vulnerable, abuse-prevention",
@@ -105,12 +117,12 @@ def question(goal: str, behavior: str) -> str:
 def main() -> None:
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--set", choices=["heldout", "dev", "heldout-2", "dev-2"], default="heldout")
+    ap.add_argument("--set", choices=["heldout", "dev", "heldout-2", "dev-2", "heldout-3"], default="heldout")
     which = ap.parse_args().set
     out_path = HERE / f"jailbreakbench-{which}.md"
     harm_cats = DEV_CATEGORIES if which.startswith("dev") else CATEGORIES
-    all_cats = {**CATEGORIES, **DEV_CATEGORIES}
-    attack_files = ATTACKS_2 if which.endswith("-2") else ATTACKS
+    all_cats = {**CATEGORIES, **DEV_CATEGORIES, OTHER_BENIGN: "protect-vulnerable"}
+    attack_files = {"-2": ATTACKS_2, "-3": ATTACKS_3}.get(which[-2:], ATTACKS)
 
     harmful = list(csv.DictReader(io.StringIO(fetch(HF + "harmful-behaviors.csv", "harmful.csv").decode())))
     benign = list(csv.DictReader(io.StringIO(fetch(HF + "benign-behaviors.csv", "benign.csv").decode())))
@@ -134,6 +146,10 @@ def main() -> None:
             continue
         count[c] = count.get(c, 0) + 1
         first = count[c] <= BENIGN_PER_CATEGORY
+        if which == "heldout-3":
+            if (c in DEV_CATEGORIES and not first) or c == OTHER_BENIGN:
+                cases.append(("ben", row, "plain", safe_prompt(row["Goal"])))
+            continue
         if (c in DEV_CATEGORIES and which == "dev" and first) or (
                 c in CATEGORIES and (first if which in ("heldout", "dev") else not first)):
             cases.append(("ben", row, "plain", safe_prompt(row["Goal"])))
